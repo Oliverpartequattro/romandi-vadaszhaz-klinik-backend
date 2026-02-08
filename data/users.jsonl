@@ -1,0 +1,3 @@
+{"_id": "user1", "email": "admin@romandi.hu", "password": "hashed_admin", "role": "ADMIN", "isActive": true, "createdAt": "2026-02-08T21:00:00Z"}
+{"_id": "user2", "email": "doktor1@romandi.hu", "password": "hashed_doc", "role": "DOCTOR", "isActive": true, "createdAt": "2026-02-08T21:05:00Z"}
+{"_id": "user3", "email": "paciens1@romandi.hu", "password": "hashed_patient", "role": "PATIENT", "isActive": true, "createdAt": "2026-02-08T21:10:00Z"}
