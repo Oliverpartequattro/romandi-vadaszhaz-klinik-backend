@@ -1,0 +1,13 @@
+{
+  "name": "romandi-vadaszhaz-klinik-backend",
+  "version": "1.0.0",
+  "description": "Webalapú klinikai időpontfoglaló rendszer",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "upload": "node scripts/uploadData.js"
+  },
+  "dependencies": {
+    "mongodb": "^6.3.0"
+  }
+}
