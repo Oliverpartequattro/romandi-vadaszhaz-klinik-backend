@@ -37,3 +37,11 @@ export const admin = (req, res, next) => {
         res.status(403).json({ message: 'Nincs jogosultságod, nem vagy admin!' });
     }
 };
+
+export const doctorOrAdmin = (req, res, next) => {
+    if (req.user && (req.user.role === 'DOCTOR' || req.user.role === 'ADMIN')) {
+        next();
+    } else {
+        res.status(403).json({ message: 'Nincs jogosultságod! Csak orvosok vagy adminok láthatják.' });
+    }
+};

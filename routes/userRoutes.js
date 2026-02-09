@@ -2,7 +2,7 @@ import express from "express";
 import User from "../models/User.js"; // A .js kiterjesztés itt kötelező!
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import { protect, admin } from '../middleware/authMiddleware.js';
+import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 // JWT token generálása
@@ -12,9 +12,9 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    1.1 Összes felhasználó lekérése
+// @desc    1.1 Összes felhasználó lekérése ADMIN ONLY
 // @route   GET /api/users
-router.get("/", async (req, res) => {
+router.get("/", protect, admin, async (req, res) => {
   try {
     const dbName = mongoose.connection.name; // Megnézzük melyik DB-ben vagyunk
     console.log(`Lekérdezés az adatbázisból: ${dbName}`);
@@ -28,34 +28,31 @@ router.get("/", async (req, res) => {
   }
 });
 
-// @desc    1.2 Az összes orvos lekérése
-// @route   GET /api/users/doctors
+// @desc    1.2 Az összes orvos lekérése (Biztonságos verzió)
 router.get("/doctors", async (req, res) => {
   try {
-    console.log("--- Orvosok listázása ---");
-    // Csak azokat keressük, ahol a role 'DOCTOR'
-    // A jelszót (-password) és az isActive mezőt most is kihagyjuk a válaszból
-    const doctors = await User.find({ role: "DOCTOR" }).select("-password");
+    // Csak a nevet, a specializációt és az ID-t adjuk vissza
+    // A jelszó, email, telefon, TAJ szám rejtve marad
+    const doctors = await User.find({ role: "DOCTOR" })
+                              .select("name specialization email phone _id"); 
+    
     res.json(doctors);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Hiba az orvosok lekérésekor", error: error.message });
+    res.status(500).json({ message: "Hiba az orvosok lekérésekor", error: error.message });
   }
 });
 
-// @desc    1.3 Az összes páciens lekérése
-// @route   GET /api/users/patients
-router.get("/patients", async (req, res) => {
+// @desc    1.3 Az összes páciens lekérése (Biztonságos verzió)
+router.get("/patients", protect, doctorOrAdmin, async (req, res) => {
   try {
-    console.log("--- Páciensek listázása ---");
-    // Csak azokat keressük, ahol a role 'PATIENT'
-    const patients = await User.find({ role: "PATIENT" }).select("-password");
+    // Pácienseknél MÁG SZIGORÚBB: Csak a nevet és az ID-t adjuk ki
+    // TAJ szám, lakcím, email, telefon SOHA nem mehet ki publikus listában!
+    const patients = await User.find({ role: "PATIENT" })
+                               .select("-password");
+    
     res.json(patients);
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Hiba a páciensek lekérésekor", error: error.message });
+    res.status(500).json({ message: "Hiba a páciensek lekérésekor", error: error.message });
   }
 });
 
