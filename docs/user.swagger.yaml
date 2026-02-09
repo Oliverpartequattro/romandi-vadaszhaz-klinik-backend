@@ -1,33 +1,59 @@
 paths:
   /api/users:
     get:
-      summary: Összes felhasználó lekérése
+      summary: Összes felhasználó lekérése (Csak Admin)
       tags: [Users]
+      security:
+        - bearerAuth: []
       responses:
         200:
-          description: Sikeres lekérdezés
+          description: Sikeres lekérdezés (minden adat)
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        403:
+          description: Nincs admin jogosultságod
 
   /api/users/doctors:
     get:
-      summary: Az összes orvos lekérése
+      summary: Az összes orvos lekérése (Publikus, elérhetőségekkel)
       tags: [Users]
       responses:
         200:
-          description: Orvosok listája
+          description: Orvosok listája (név, szakvizsga, email, telefon)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id: { type: string }
+                    name: { type: string }
+                    specialization: { type: string }
+                    email: { type: string }
+                    phone: { type: string }
 
   /api/users/patients:
     get:
-      summary: Az összes páciens lekérése
+      summary: Az összes páciens lekérése (Csak Orvos vagy Admin)
       tags: [Users]
+      security:
+        - bearerAuth: []
       responses:
         200:
-          description: Páciensek listája
+          description: Páciensek listája minden adattal (TAJ, lakcím stb.)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        403:
+          description: Csak orvosok vagy adminok férhetnek hozzá
 
   /api/users/register:
     post:
@@ -43,7 +69,7 @@ paths:
         201:
           description: Felhasználó létrehozva
         400:
-          description: Már létező felhasználó
+          description: Validációs hiba vagy már létező email
 
   /api/users/login:
     post:
@@ -57,15 +83,13 @@ paths:
               type: object
               required: [email, password]
               properties:
-                email:
-                  type: string
-                password:
-                  type: string
+                email: { type: string }
+                password: { type: string }
       responses:
         200:
-          description: Sikeres bejelentkezés
+          description: Sikeres bejelentkezés (visszaadja a tokent és a júzert)
         401:
-          description: Érvénytelen adatok
+          description: Érvénytelen email vagy jelszó
 
   /api/users/profile:
     get:
@@ -75,29 +99,16 @@ paths:
         - bearerAuth: []
       responses:
         200:
-          description: Felhasználói adatok
+          description: Saját profil adatai
         401:
-          description: Nincs jogosultság
-    put:
-      summary: Felhasználói profil frissítése
-      tags: [Users]
-      security:
-        - bearerAuth: []
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserUpdate'
-      responses:
-        200:
-          description: Profil frissítve
+          description: Nincs érvényes token
 
   /api/users/{id}:
     delete:
-      summary: Felhasználó törlése (Saját vagy Admin által)
+      summary: Felhasználó törlése (Saját profil vagy Admin által)
       tags: [Users]
       security:
-        - bearerAuth: [] # Ezt add hozzá!
+        - bearerAuth: []
       parameters:
         - in: path
           name: id
@@ -107,35 +118,35 @@ paths:
       responses:
         200:
           description: Sikeres törlés
-        404:
-          description: Nem található felhasználó
+        403:
+          description: Nincs jogosultságod más profilját törölni
 
 components:
   schemas:
     User:
       type: object
       properties:
-        _id:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-        role:
-          type: string
-          enum: [ADMIN, DOCTOR, PATIENT]
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        role: { type: string, enum: [ADMIN, DOCTOR, PATIENT] }
+        specialization: { type: string, description: "Csak orvosnak" }
+        tajNumber: { type: string, description: "Csak páciensnek" }
+        address: { type: string, description: "Csak páciensnek" }
     
     UserRegister:
       type: object
-      required: [name, email, password, phone, tajNumber, address]
+      required: [name, email, password, phone, role]
       properties:
         name: { type: string }
         email: { type: string }
         password: { type: string }
         phone: { type: string }
-        tajNumber: { type: string }
-        address: { type: string }
-        role: { type: string, default: PATIENT }
+        role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT }
+        specialization: { type: string, description: "Kötelező, ha role: DOCTOR" }
+        tajNumber: { type: string, description: "Kötelező, if role: PATIENT" }
+        address: { type: string, description: "Kötelező, if role: PATIENT" }
 
     UserUpdate:
       type: object
@@ -146,3 +157,4 @@ components:
         phone: { type: string }
         address: { type: string }
         tajNumber: { type: string }
+        specialization: { type: string }
