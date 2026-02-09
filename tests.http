@@ -2,8 +2,16 @@
 ###VERCEL
 ###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
-### 1. Összes felhasználó lekérése
+### 1.1 Összes felhasználó lekérése
 GET {{baseUrl}}/users
+Content-Type: application/json
+
+### 1.2 Összes orvos lekérése
+GET {{baseUrl}}/users/doctors
+Content-Type: application/json
+
+### 1.3 Összes páciens lekérése
+GET {{baseUrl}}/users/patients
 Content-Type: application/json
 
 ### 2. Regisztráció 
