@@ -191,30 +191,45 @@ router.put('/profile', protect, async (req, res) => {
     }
 });
 
-// @desc    6.Felhasználó törlése ID alapján
+
+// @desc    6. Felhasználó törlése (Admin vagy Saját maga)
 // @route   DELETE /api/users/:id
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", protect, async (req, res) => {
   try {
-    const userId = req.params.id;
-    console.log(`--- Törlési kísérlet: ID ${userId} ---`);
+    const userIdToDelete = req.params.id;
+    const loggedInUserId = req.user._id.toString();
+    const isAdmin = req.user.role === 'ADMIN';
 
-    const user = await User.findById(userId);
+    console.log(`--- Törlési kísérlet: ID ${userIdToDelete} ---`);
+    console.log(`Kezdeményező: ${req.user.email} (Role: ${req.user.role})`);
 
-    if (user) {
-      await User.findByIdAndDelete(userId);
-      console.log(`Sikeres törlés: ${user.email} eltávolítva.`);
-      res.json({ message: "Felhasználó sikeresen törölve" });
+    // JOGOSULTSÁG ELLENŐRZÉSE: 
+    // Csak akkor engedjük, ha Admin VAGY saját magát akarja törölni
+    if (isAdmin || loggedInUserId === userIdToDelete) {
+      
+      const user = await User.findById(userIdToDelete);
+
+      if (user) {
+        if (isAdmin && user.role === 'ADMIN' && loggedInUserId !== userIdToDelete) {
+             return res.status(403).json({ message: "Admin nem törölhet másik admint!" });
+        }
+
+        await User.findByIdAndDelete(userIdToDelete);
+        console.log(`Sikeres törlés: ${user.email} eltávolítva.`);
+        res.json({ message: "Felhasználó sikeresen törölve" });
+      } else {
+        res.status(404).json({ message: "Felhasználó nem található" });
+      }
+
     } else {
-      console.warn(
-        `Törlés sikertelen: Nem található felhasználó ezzel az ID-val: ${userId}`,
-      );
-      res.status(404).json({ message: "Felhasználó nem található" });
+      // Ha nem admin és nem a saját ID-ja
+      console.warn(`Jogosulatlan törlési kísérlet! ${req.user.email} -> ID: ${userIdToDelete}`);
+      res.status(403).json({ message: "Nincs jogosultságod más felhasználót törölni!" });
     }
+
   } catch (error) {
     console.error(`Hiba a törlés során:`, error.message);
-    res
-      .status(500)
-      .json({ message: "Szerver hiba a törlésnél", error: error.message });
+    res.status(500).json({ message: "Szerver hiba a törlésnél", error: error.message });
   }
 });
 
