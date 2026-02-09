@@ -12,7 +12,7 @@ app.use(express.json());
 app.use('/api/users', userRoutes)
 
 // Teszt route
-app.get('/', (req, res) => res.send('A szerver fut (ESM módban)!'));
+app.get('/', (req, res) => res.send('A szerver fut!'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Szerver: http://localhost:${PORT}`));
