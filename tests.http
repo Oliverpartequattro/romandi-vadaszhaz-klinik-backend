@@ -1,0 +1,6 @@
+### Változók definiálása
+@baseUrl = http://localhost:3000/api
+
+### Összes felhasználó lekérése (Teszt)
+GET {{baseUrl}}/users
+Content-Type: application/json
