@@ -19,13 +19,13 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Kovács János",
-    "email": "janos@gmail.com",
-    "password": "titkosjelszo123",
+    "name": "Admin János",
+    "email": "admin@gmail.com",
+    "password": "pwd",
     "phone": "+36301234567",
-    "tajNumber": "123 456 789",
-    "address": "9022 Győr, Városház tér 1.",
-    "role": "PATIENT"
+    "tajNumber": "666 666 789",
+    "address": "9022 Győr, Admin tér 1.",
+    "role": "ADMIN"
 }
 
 ### 3. Bejelentkezés
@@ -50,6 +50,6 @@ Content-Type: application/json
     "phone": "+36709998877",
     "address": "1011 Budapest, Fő utca 1."
 }
-### 6. Felhasználó törlése 
-DELETE {{baseUrl}}/users/6989c1c5d713db859db1cedf
-Content-Type: application/json
+### 6. Felhasználó törlése ID alapján (Admin vagy Saját maga)
+DELETE {{baseUrl}}/users/6989ce21ed898330c946f57b
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzOTA3OSwiZXhwIjoxNzczMjMxMDc5fQ.E_CsdK6wY2TZlDH8ezkJsbNvhPJQI8h4tL8xEo4aum4

@@ -94,8 +94,10 @@ paths:
 
   /api/users/{id}:
     delete:
-      summary: Felhasználó törlése ID alapján
+      summary: Felhasználó törlése (Saját vagy Admin által)
       tags: [Users]
+      security:
+        - bearerAuth: [] # Ezt add hozzá!
       parameters:
         - in: path
           name: id
