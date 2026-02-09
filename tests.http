@@ -1,10 +1,10 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljZTIxZWQ4OTgzMzBjOTQ2ZjU3YiIsImlhdCI6MTc3MDY2ODU4NSwiZXhwIjoxNzczMjYwNTg1fQ.eaJLkx3q6VT44wauOLzSpXOJP0ozDoBOruQeWTf8gKI
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljZTIxZWQ4OTgzMzBjOTQ2ZjU3YiIsImlhdCI6MTc3MDY2OTEwMCwiZXhwIjoxNzczMjYxMTAwfQ.gSPBXgN0mvKMY1JNfiPMqXXEmdkTF-VP3yVqzC97cmA
 Content-Type: application/json
 ### 1.2 Összes orvos lekérése
 GET {{baseUrl}}/users/doctors
@@ -35,7 +35,7 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "doktorjani@gmail.com",
+    "email": "admin@gmail.com",
     "password": "pwd"
 }
 ### 4. Profil lekérése

@@ -7,7 +7,7 @@ paths:
         - bearerAuth: []
       responses:
         200:
-          description: Sikeres lekérdezés (minden adat)
+          description: Sikeres lekérdezés
           content:
             application/json:
               schema:
@@ -19,7 +19,7 @@ paths:
 
   /api/users/doctors:
     get:
-      summary: Az összes orvos lekérése (Publikus, elérhetőségekkel)
+      summary: Az összes orvos lekérése (Publikus)
       tags: [Users]
       responses:
         200:
@@ -45,7 +45,7 @@ paths:
         - bearerAuth: []
       responses:
         200:
-          description: Páciensek listája minden adattal (TAJ, lakcím stb.)
+          description: Páciensek listája minden adattal
           content:
             application/json:
               schema:
@@ -69,7 +69,7 @@ paths:
         201:
           description: Felhasználó létrehozva
         400:
-          description: Validációs hiba vagy már létező email
+          description: Már létező email
 
   /api/users/login:
     post:
@@ -87,21 +87,40 @@ paths:
                 password: { type: string }
       responses:
         200:
-          description: Sikeres bejelentkezés (visszaadja a tokent és a júzert)
+          description: Sikeres bejelentkezés
         401:
-          description: Érvénytelen email vagy jelszó
+          description: Érvénytelen adatok
 
   /api/users/profile:
     get:
-      summary: Bejelentkezett felhasználó profilja
+      summary: Bejelentkezett felhasználó saját profilja
       tags: [Users]
       security:
         - bearerAuth: []
       responses:
         200:
-          description: Saját profil adatai
-        401:
-          description: Nincs érvényes token
+          description: Profil adatok
+    put:
+      summary: Saját profil frissítése
+      description: Frissíti a bejelentkezett felhasználó adatait és új tokent generál.
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        200:
+          description: Profil sikeresen frissítve
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        404:
+          description: Felhasználó nem található
 
   /api/users/{id}:
     delete:
@@ -119,9 +138,15 @@ paths:
         200:
           description: Sikeres törlés
         403:
-          description: Nincs jogosultságod más profilját törölni
+          description: Nincs jogosultság a művelethez
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
   schemas:
     User:
       type: object
@@ -131,25 +156,27 @@ components:
         email: { type: string }
         phone: { type: string }
         role: { type: string, enum: [ADMIN, DOCTOR, PATIENT] }
-        specialization: { type: string, description: "Csak orvosnak" }
-        tajNumber: { type: string, description: "Csak páciensnek" }
-        address: { type: string, description: "Csak páciensnek" }
+        specialization: { type: string }
+        tajNumber: { type: string }
+        address: { type: string }
+        token: { type: string }
     
     UserRegister:
       type: object
-      required: [name, email, password, phone, role]
+      required: [name, email, password, phone]
       properties:
         name: { type: string }
         email: { type: string }
         password: { type: string }
         phone: { type: string }
         role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT }
-        specialization: { type: string, description: "Kötelező, ha role: DOCTOR" }
-        tajNumber: { type: string, description: "Kötelező, if role: PATIENT" }
-        address: { type: string, description: "Kötelező, if role: PATIENT" }
+        specialization: { type: string }
+        tajNumber: { type: string }
+        address: { type: string }
 
     UserUpdate:
       type: object
+      description: Csak azokat a mezőket küldd el, amiket módosítani akarsz.
       properties:
         name: { type: string }
         email: { type: string }
@@ -157,4 +184,3 @@ components:
         phone: { type: string }
         address: { type: string }
         tajNumber: { type: string }
-        specialization: { type: string }
