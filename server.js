@@ -1,8 +1,9 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import path from "path"; // Új import!
-import { fileURLToPath } from 'url'; // Új import!
+import path from "path";
+import { fileURLToPath } from 'url';
+import YAML from 'yamljs'; // Új import a YAML fájlok fix betöltéséhez
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import swaggerJsdoc from "swagger-jsdoc";
@@ -11,7 +12,6 @@ import swaggerUi from "swagger-ui-express";
 dotenv.config();
 connectDB();
 
-// ES moduloknál így kapjuk meg a könyvtárnevet
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -19,11 +19,14 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// --- ROUTES ---
 app.use("/api/users", userRoutes);
 app.get("/", (req, res) => res.send("A szerver fut!"));
 
-// --- SWAGGER BEÁLLÍTÁSOK ---
+// --- SWAGGER KONFIGURÁCIÓ ---
+
+// Manuálisan betöltjük a YAML fájlt, hogy a Vercel biztosan lássa a tartalmát
+const swaggerDocument = YAML.load(path.join(__dirname, "./docs/user.swagger.yaml"));
 
 const swaggerOptions = {
   definition: {
@@ -36,12 +39,16 @@ const swaggerOptions = {
     servers: [
       {
         url: "https://romandi-vadaszhaz-klinik-backend.vercel.app",
+        description: "Éles szerver"
       },
       {
         url: "http://localhost:3000",
+        description: "Helyi fejlesztői szerver"
       }
     ],
-    components: {
+    // Átvesszük a YAML fájlból a definíciókat
+    paths: swaggerDocument.paths,
+    components: swaggerDocument.components || {
       securitySchemes: {
         bearerAuth: {
           type: "http",
@@ -51,29 +58,28 @@ const swaggerOptions = {
       },
     },
   },
-  // Dinamikus elérési út a YAML fájlokhoz
-  apis: [path.join(__dirname, "./docs/*.yaml")],
+  apis: [], // Üresen hagyjuk, mert a paths-t már manuálisan megadtuk fent
 };
 
-// 1. ELŐBB generáljuk le a dokumentációt
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
-// 2. CDN beállítások a Vercel hiba elkerülésére
+// CDN beállítások a Vercel statikus fájl hiba ellen
 const swaggerOptionsUI = {
   customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
   customJs: [
     'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.js',
     'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.js',
   ],
+  customSiteTitle: "Klinik API Docs"
 };
 
-// 3. UTÁNA állítjuk be az útvonalat
+// Swagger UI beállítása
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerOptionsUI));
 
 // --- SZERVER INDÍTÁSA ---
-
 const PORT = process.env.PORT || 3000;
-// Csak akkor indítjuk el a listen-t, ha nem Vercel környezetben vagyunk (opcionális, de stabilabb)
+
+// Vercel-nél nem szabad fix porton listen-elni, de helyi teszteléshez kell
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => console.log(`Szerver: http://localhost:${PORT}`));
 }
