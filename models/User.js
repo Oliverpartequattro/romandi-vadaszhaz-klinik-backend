@@ -3,6 +3,9 @@ import bcrypt from 'bcryptjs';
 
 const userSchema = new mongoose.Schema({
     email: { type: String, required: true, unique: true },
+    phone: { type: String, required: true }, 
+    tajNumber: { type: String, required: true, unique: true }, // A TAJ is egyedi kell legyen
+    address: { type: String, required: true },
     password: { type: String, required: true }, // Itt hash-elt jelszó lesz de meg nincs
     role: { type: String, enum: ['ADMIN', 'DOCTOR', 'PATIENT'], default: 'PATIENT' },
     isActive: { type: Boolean, default: true },

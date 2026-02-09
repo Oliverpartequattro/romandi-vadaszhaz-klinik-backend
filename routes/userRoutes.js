@@ -2,6 +2,7 @@ import express from "express";
 import User from "../models/User.js"; // A .js kiterjesztés itt kötelező!
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 // JWT token generálása
@@ -58,6 +59,25 @@ router.get("/patients", async (req, res) => {
   }
 });
 
+
+
+// @desc    Bejelentkezett felhasználó profilja
+// @route   GET /api/users/profile
+// A 'protect' middleware-t a route és a függvény közé tesszük
+router.get('/profile', protect, async (req, res) => {
+    // Mivel a middleware már kikereste a usert és betette a req.user-be:
+    if (req.user) {
+        res.json({
+            _id: req.user._id,
+            name: req.user.name,
+            email: req.user.email,
+            role: req.user.role
+        });
+    } else {
+        res.status(404).json({ message: 'Felhasználó nem található' });
+    }
+});
+
 // @desc    Felhasználó törlése ID alapján
 // @route   DELETE /api/users/:id
 router.delete("/:id", async (req, res) => {
@@ -88,7 +108,7 @@ router.delete("/:id", async (req, res) => {
 // @desc    Új felhasználó regisztrálása
 // @route   POST /api/users/register
 router.post("/register", async (req, res) => {
-  const { email, name } = req.body;
+const { name, email, password, phone, tajNumber, address, role } = req.body;
   console.log(`--- Regisztrációs kísérlet: ${email} (${name}) ---`);
 
   try {
@@ -107,6 +127,9 @@ router.post("/register", async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        tajNumber: user.tajNumber,
+        address: user.address,
         role: user.role,
         token: generateToken(user._id),
       });

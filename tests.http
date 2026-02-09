@@ -33,7 +33,10 @@ Content-Type: application/json
     "email": "janika2@gmail.com",
     "password": "titkosjelszo123"
 }
+### 4. Profil lekérése
+GET {{baseUrl}}/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliMzVkZTQzNGQzOGFhYmJkYzM4YiIsImlhdCI6MTc3MDYzNDY5OSwiZXhwIjoxNzczMjI2Njk5fQ.VI0rfm57dRqGE0-4bC_rbBgFW6Kq9vxumWsUVczSGbY
 
-### 4. Felhasználó törlése 
+### 5. Felhasználó törlése 
 DELETE {{baseUrl}}/users/6989b24608a1b5c011bd40f5
 Content-Type: application/json
