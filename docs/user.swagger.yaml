@@ -1,0 +1,146 @@
+paths:
+  /api/users:
+    get:
+      summary: Összes felhasználó lekérése
+      tags: [Users]
+      responses:
+        200:
+          description: Sikeres lekérdezés
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /api/users/doctors:
+    get:
+      summary: Az összes orvos lekérése
+      tags: [Users]
+      responses:
+        200:
+          description: Orvosok listája
+
+  /api/users/patients:
+    get:
+      summary: Az összes páciens lekérése
+      tags: [Users]
+      responses:
+        200:
+          description: Páciensek listája
+
+  /api/users/register:
+    post:
+      summary: Új felhasználó regisztrálása
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+      responses:
+        201:
+          description: Felhasználó létrehozva
+        400:
+          description: Már létező felhasználó
+
+  /api/users/login:
+    post:
+      summary: Bejelentkezés
+      tags: [Users]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        200:
+          description: Sikeres bejelentkezés
+        401:
+          description: Érvénytelen adatok
+
+  /api/users/profile:
+    get:
+      summary: Bejelentkezett felhasználó profilja
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: Felhasználói adatok
+        401:
+          description: Nincs jogosultság
+    put:
+      summary: Felhasználói profil frissítése
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        200:
+          description: Profil frissítve
+
+  /api/users/{id}:
+    delete:
+      summary: Felhasználó törlése ID alapján
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Sikeres törlés
+        404:
+          description: Nem található felhasználó
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, DOCTOR, PATIENT]
+    
+    UserRegister:
+      type: object
+      required: [name, email, password, phone, tajNumber, address]
+      properties:
+        name: { type: string }
+        email: { type: string }
+        password: { type: string }
+        phone: { type: string }
+        tajNumber: { type: string }
+        address: { type: string }
+        role: { type: string, default: PATIENT }
+
+    UserUpdate:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        password: { type: string }
+        phone: { type: string }
+        address: { type: string }
+        tajNumber: { type: string }
