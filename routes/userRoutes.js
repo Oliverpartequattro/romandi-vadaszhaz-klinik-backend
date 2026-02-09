@@ -27,6 +27,29 @@ router.get('/', async (req, res) => {
     }
 });
 
+// @desc    Felhasználó törlése ID alapján
+// @route   DELETE /api/users/:id
+router.delete('/:id', async (req, res) => {
+    try {
+        const userId = req.params.id;
+        console.log(`--- Törlési kísérlet: ID ${userId} ---`);
+
+        const user = await User.findById(userId);
+
+        if (user) {
+            await User.findByIdAndDelete(userId);
+            console.log(`Sikeres törlés: ${user.email} eltávolítva.`);
+            res.json({ message: 'Felhasználó sikeresen törölve' });
+        } else {
+            console.warn(`Törlés sikertelen: Nem található felhasználó ezzel az ID-val: ${userId}`);
+            res.status(404).json({ message: 'Felhasználó nem található' });
+        }
+    } catch (error) {
+        console.error(`Hiba a törlés során:`, error.message);
+        res.status(500).json({ message: 'Szerver hiba a törlésnél', error: error.message });
+    }
+});
+
 // @desc    Új felhasználó regisztrálása
 // @route   POST /api/users/register
 router.post('/register', async (req, res) => {

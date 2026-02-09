@@ -16,3 +16,7 @@ Content-Type: application/json
     "password": "titkosjelszo123",
     "role": "PATIENT"
 }
+
+### 3. Felhasználó törlése (Az ID-t cseréld ki egy létezőre a listádból!)
+DELETE {{baseUrl}}/users/6989aa07e68d621ab6b094b4
+Content-Type: application/json
