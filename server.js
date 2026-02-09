@@ -46,9 +46,18 @@ const swaggerOptions = {
   apis: ["./docs/*.yaml"],
 };
 
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
+// A statikus fájlok elérési útjának fixálása CDN-ről
+const swaggerOptionsUI = {
+  customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
+  customJs: [
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.js',
+  ],
+};
 
-// Swagger UI útvonala
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+// Swagger UI útvonala a fixált opciókkal
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs, swaggerOptionsUI));
+
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 export default app;
