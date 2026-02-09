@@ -59,52 +59,6 @@ router.get("/patients", async (req, res) => {
   }
 });
 
-// @desc    Bejelentkezett felhasználó profilja
-// @route   GET /api/users/profile
-// A 'protect' middleware-t a route és a függvény közé tesszük
-router.get("/profile", protect, async (req, res) => {
-  // Mivel a middleware már kikereste a usert és betette a req.user-be:
-  if (req.user) {
-    res.json({
-      _id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      phone: req.user.phone,
-      tajNumber: req.user.tajNumber,
-      address: req.user.address,
-      role: req.user.role,
-    });
-  } else {
-    res.status(404).json({ message: "Felhasználó nem található" });
-  }
-});
-
-// @desc    Felhasználó törlése ID alapján
-// @route   DELETE /api/users/:id
-router.delete("/:id", async (req, res) => {
-  try {
-    const userId = req.params.id;
-    console.log(`--- Törlési kísérlet: ID ${userId} ---`);
-
-    const user = await User.findById(userId);
-
-    if (user) {
-      await User.findByIdAndDelete(userId);
-      console.log(`Sikeres törlés: ${user.email} eltávolítva.`);
-      res.json({ message: "Felhasználó sikeresen törölve" });
-    } else {
-      console.warn(
-        `Törlés sikertelen: Nem található felhasználó ezzel az ID-val: ${userId}`,
-      );
-      res.status(404).json({ message: "Felhasználó nem található" });
-    }
-  } catch (error) {
-    console.error(`Hiba a törlés során:`, error.message);
-    res
-      .status(500)
-      .json({ message: "Szerver hiba a törlésnél", error: error.message });
-  }
-});
 
 // @desc    Új felhasználó regisztrálása
 // @route   POST /api/users/register
@@ -171,6 +125,96 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     console.error(`Hiba a login során:`, error.message);
     res.status(500).json({ message: "Szerver hiba", error: error.message });
+  }
+});
+
+// @desc    Bejelentkezett felhasználó profilja
+// @route   GET /api/users/profile
+// A 'protect' middleware-t a route és a függvény közé tesszük
+router.get("/profile", protect, async (req, res) => {
+  // Mivel a middleware már kikereste a usert és betette a req.user-be:
+  if (req.user) {
+    res.json({
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      phone: req.user.phone,
+      tajNumber: req.user.tajNumber,
+      address: req.user.address,
+      role: req.user.role,
+    });
+  } else {
+    res.status(404).json({ message: "Felhasználó nem található" });
+  }
+});
+
+// @desc    Felhasználói profil frissítése
+// @route   PUT /api/users/profile
+router.put('/profile', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            // Csak azokat a mezőket frissítjük, amik jönnek a kérésben, 
+            // különben megtartjuk a régit
+            user.name = req.body.name || user.name;
+            user.email = req.body.email || user.email;
+            user.phone = req.body.phone || user.phone;
+            user.address = req.body.address || user.address;
+            user.tajNumber = req.body.tajNumber || user.tajNumber;
+
+            // Ha új jelszó érkezik, beállítjuk (a User.js pre-save hookja hashelni fogja!)
+            if (req.body.password) {
+                user.password = req.body.password;
+            }
+
+            const updatedUser = await user.save();
+
+            console.log(`--- Profil frissítve: ${updatedUser.email} ---`);
+
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                phone: updatedUser.phone,
+                address: updatedUser.address,
+                tajNumber: updatedUser.tajNumber,
+                role: updatedUser.role,
+                token: generateToken(updatedUser._id), // Új tokent adunk vissza
+            });
+        } else {
+            res.status(404).json({ message: 'Felhasználó nem található' });
+        }
+    } catch (error) {
+        console.error('Hiba a profil frissítésekor:', error.message);
+        res.status(500).json({ message: 'Szerver hiba a frissítés során', error: error.message });
+    }
+});
+
+// @desc    Felhasználó törlése ID alapján
+// @route   DELETE /api/users/:id
+router.delete("/:id", async (req, res) => {
+  try {
+    const userId = req.params.id;
+    console.log(`--- Törlési kísérlet: ID ${userId} ---`);
+
+    const user = await User.findById(userId);
+
+    if (user) {
+      await User.findByIdAndDelete(userId);
+      console.log(`Sikeres törlés: ${user.email} eltávolítva.`);
+      res.json({ message: "Felhasználó sikeresen törölve" });
+    } else {
+      console.warn(
+        `Törlés sikertelen: Nem található felhasználó ezzel az ID-val: ${userId}`,
+      );
+      res.status(404).json({ message: "Felhasználó nem található" });
+    }
+  } catch (error) {
+    console.error(`Hiba a törlés során:`, error.message);
+    res
+      .status(500)
+      .json({ message: "Szerver hiba a törlésnél", error: error.message });
   }
 });
 

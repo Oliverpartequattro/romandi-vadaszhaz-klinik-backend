@@ -38,8 +38,18 @@ Content-Type: application/json
 }
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliZWM5ODdmMTBjMTEwYjYyN2I4ZiIsImlhdCI6MTc3MDYzNTE0MiwiZXhwIjoxNzczMjI3MTQyfQ.l8PymYtukfSSEq6ByVtG2YOrcMggh48SRQGRDV6iu_E
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliZWM5ODdmMTBjMTEwYjYyN2I4ZiIsImlhdCI6MTc3MDYzNTUwOSwiZXhwIjoxNzczMjI3NTA5fQ.1p40TsnF5e02xQ0Yk4CgbZji5GhT6Y7lEqas47ZApbc
 
-### 5. Felhasználó törlése 
+### 5. Profil frissítése (Név és telefonszám módosítása)
+PUT {{baseUrl}}/users/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliZWM5ODdmMTBjMTEwYjYyN2I4ZiIsImlhdCI6MTc3MDYzNTUwOSwiZXhwIjoxNzczMjI3NTA5fQ.1p40TsnF5e02xQ0Yk4CgbZji5GhT6Y7lEqas47ZApbc
+Content-Type: application/json
+
+{
+    "name": "Kovács János Úr",
+    "phone": "+36709998877",
+    "address": "1011 Budapest, Fő utca 1."
+}
+### 6. Felhasználó törlése 
 DELETE {{baseUrl}}/users/6989a941a66e2bdbdd8c3374
 Content-Type: application/json
