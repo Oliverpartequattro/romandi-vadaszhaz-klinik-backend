@@ -19,9 +19,12 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Kovács János3",
-    "email": "janika2@gmail.com",
+    "name": "Kovács János",
+    "email": "janos@gmail.com",
     "password": "titkosjelszo123",
+    "phone": "+36301234567",
+    "tajNumber": "123 456 789",
+    "address": "9022 Győr, Városház tér 1.",
     "role": "PATIENT"
 }
 
@@ -30,13 +33,13 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "janika2@gmail.com",
+    "email": "janos@gmail.com",
     "password": "titkosjelszo123"
 }
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliMzVkZTQzNGQzOGFhYmJkYzM4YiIsImlhdCI6MTc3MDYzNDY5OSwiZXhwIjoxNzczMjI2Njk5fQ.VI0rfm57dRqGE0-4bC_rbBgFW6Kq9vxumWsUVczSGbY
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliZWM5ODdmMTBjMTEwYjYyN2I4ZiIsImlhdCI6MTc3MDYzNTE0MiwiZXhwIjoxNzczMjI3MTQyfQ.l8PymYtukfSSEq6ByVtG2YOrcMggh48SRQGRDV6iu_E
 
 ### 5. Felhasználó törlése 
-DELETE {{baseUrl}}/users/6989b24608a1b5c011bd40f5
+DELETE {{baseUrl}}/users/6989a941a66e2bdbdd8c3374
 Content-Type: application/json

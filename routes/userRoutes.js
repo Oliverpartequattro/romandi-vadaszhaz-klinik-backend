@@ -2,7 +2,7 @@ import express from "express";
 import User from "../models/User.js"; // A .js kiterjesztés itt kötelező!
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import { protect } from '../middleware/authMiddleware.js';
+import { protect } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 // JWT token generálása
@@ -59,23 +59,24 @@ router.get("/patients", async (req, res) => {
   }
 });
 
-
-
 // @desc    Bejelentkezett felhasználó profilja
 // @route   GET /api/users/profile
 // A 'protect' middleware-t a route és a függvény közé tesszük
-router.get('/profile', protect, async (req, res) => {
-    // Mivel a middleware már kikereste a usert és betette a req.user-be:
-    if (req.user) {
-        res.json({
-            _id: req.user._id,
-            name: req.user.name,
-            email: req.user.email,
-            role: req.user.role
-        });
-    } else {
-        res.status(404).json({ message: 'Felhasználó nem található' });
-    }
+router.get("/profile", protect, async (req, res) => {
+  // Mivel a middleware már kikereste a usert és betette a req.user-be:
+  if (req.user) {
+    res.json({
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      phone: req.user.phone,
+      tajNumber: req.user.tajNumber,
+      address: req.user.address,
+      role: req.user.role,
+    });
+  } else {
+    res.status(404).json({ message: "Felhasználó nem található" });
+  }
 });
 
 // @desc    Felhasználó törlése ID alapján
@@ -108,7 +109,7 @@ router.delete("/:id", async (req, res) => {
 // @desc    Új felhasználó regisztrálása
 // @route   POST /api/users/register
 router.post("/register", async (req, res) => {
-const { name, email, password, phone, tajNumber, address, role } = req.body;
+  const { name, email, password, phone, tajNumber, address, role } = req.body;
   console.log(`--- Regisztrációs kísérlet: ${email} (${name}) ---`);
 
   try {
@@ -151,7 +152,6 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
 
     // 2. Felhasználó létezésének és jelszavának ellenőrzése
-    // A matchPassword metódust korábban adtuk hozzá a User modellhez!
     if (user && (await user.matchPassword(password))) {
       console.log(`Sikeres belépés: ${email}`);
       res.json({
