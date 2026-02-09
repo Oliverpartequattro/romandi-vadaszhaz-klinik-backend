@@ -19,13 +19,14 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Admin János",
-    "email": "admin@gmail.com",
+    "name": "Doktor János",
+    "email": "doktorjani@gmail.com",
     "password": "pwd",
     "phone": "+36301234567",
     "tajNumber": "666 666 789",
     "address": "9022 Győr, Admin tér 1.",
-    "role": "ADMIN"
+    "specialization": "Katéterezés",
+    "role": "DOCTOR"
 }
 
 ### 3. Bejelentkezés
@@ -38,17 +39,17 @@ Content-Type: application/json
 }
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzNjkyNSwiZXhwIjoxNzczMjI4OTI1fQ.ZHl3zeOdCXxoMBTCIWrkGIFfO_dKgPKG-TCNFPGHN1A
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGEzZTcwNWNmNzRjNjQwYzFmNGIxYyIsImlhdCI6MTc3MDY2NzY0NywiZXhwIjoxNzczMjU5NjQ3fQ.Yzm4-y1NAFzJkpO77YH0cNPHe3w-LsaFJPYju9DvB3w
 
 ### 5. Profil frissítése (Név és telefonszám módosítása)
 PUT {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzNjkyNSwiZXhwIjoxNzczMjI4OTI1fQ.ZHl3zeOdCXxoMBTCIWrkGIFfO_dKgPKG-TCNFPGHN1A
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDY2Nzc3MSwiZXhwIjoxNzczMjU5NzcxfQ.14GEamK8aUT1Qcl-8971DKlMmEEKYuvh91eXatLiRpM
 Content-Type: application/json
 
 {
-    "name": "Kovács János Úr Hölgy",
+    "name": "Páciens János",
     "phone": "+36709998877",
-    "address": "1011 Budapest, Fő utca 1."
+    "address": "9022 Győr, Páciens tér 1."
 }
 ### 6. Felhasználó törlése ID alapján (Admin vagy Saját maga)
 DELETE {{baseUrl}}/users/6989ce21ed898330c946f57b

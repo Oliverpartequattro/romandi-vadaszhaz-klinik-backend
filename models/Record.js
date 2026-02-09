@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 
 const recordSchema = new mongoose.Schema({
-    patient_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
-    doctor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Doctor', required: true },
+    patient_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    doctor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     appointment_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Appointment' },
     service_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Service' },
     description: { type: String, required: true }, 
