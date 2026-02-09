@@ -1,16 +1,18 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1. Összes felhasználó lekérése
 GET {{baseUrl}}/users
 Content-Type: application/json
 
-### 2. Bejelentkezés (Még nem működik, csak a teszt vázlata)
-POST {{baseUrl}}/users/login
+### 2. Regisztráció tesztelése
+POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "email": "teszt@elek.hu",
-    "password": "jelszo123"
+    "name": "Kovács János2",
+    "email": "janika@gmail.com",
+    "password": "titkosjelszo123",
+    "role": "PATIENT"
 }
