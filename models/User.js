@@ -1,16 +1,57 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
-const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true }, 
-    tajNumber: { type: String, required: true, unique: true }, // A TAJ is egyedi kell legyen
-    address: { type: String, required: true },
-    password: { type: String, required: true }, // Itt hash-elt jelszó lesz de meg nincs
-    role: { type: String, enum: ['ADMIN', 'DOCTOR', 'PATIENT'], default: 'PATIENT' },
-    isActive: { type: Boolean, default: true },
-}, { timestamps: true });
+const userSchema = new mongoose.Schema(
+  {
+    name: { 
+      type: String, 
+      required: [true, "Név megadása kötelező"] 
+    },
+    email: { 
+      type: String, 
+      required: [true, "Email megadása kötelező"], 
+      unique: true 
+    },
+    password: { 
+      type: String, 
+      required: [true, "Jelszó megadása kötelező"] 
+    },
+    phone: { 
+      type: String, 
+      required: [true, "Telefonszám megadása kötelező"] 
+    },
+    role: { 
+      type: String, 
+      enum: ["ADMIN", "DOCTOR", "PATIENT"], 
+      default: "PATIENT" 
+    },
+
+    // --- CSAK PÁCIENS MEZŐK ---
+    tajNumber: {
+      type: String,
+      required: function () {
+        return this.role === "PATIENT"; // Csak páciensnél kötelező
+      },
+    },
+    address: {
+      type: String,
+      required: function () {
+        return this.role === "PATIENT"; // Csak páciensnél kötelező
+      },
+    },
+
+    // --- CSAK ORVOS MEZŐK ---
+    specialization: {
+      type: String,
+      required: function () {
+        return this.role === "DOCTOR"; // Csak orvosnál kötelező
+      },
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
 userSchema.pre('save', async function () {
     if (!this.isModified('password')) return;
