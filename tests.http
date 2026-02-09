@@ -38,7 +38,7 @@ Content-Type: application/json
 }
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
-Authorization: Bearery eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzNjkyNSwiZXhwIjoxNzczMjI4OTI1fQ.ZHl3zeOdCXxoMBTCIWrkGIFfO_dKgPKG-TCNFPGHN1A
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzNjkyNSwiZXhwIjoxNzczMjI4OTI1fQ.ZHl3zeOdCXxoMBTCIWrkGIFfO_dKgPKG-TCNFPGHN1A
 
 ### 5. Profil frissítése (Név és telefonszám módosítása)
 PUT {{baseUrl}}/users/profile
