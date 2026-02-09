@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const recordSchema = new mongoose.Schema({
     patient_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Patient', required: true },
@@ -8,4 +8,5 @@ const recordSchema = new mongoose.Schema({
     description: { type: String, required: true }, 
 }, { timestamps: true });
 
-module.exports = mongoose.model('Record', recordSchema);
+const Record = mongoose.model('Record', recordSchema);
+export default Record;
