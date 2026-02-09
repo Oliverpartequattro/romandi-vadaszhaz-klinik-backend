@@ -38,11 +38,11 @@ Content-Type: application/json
 }
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliZWM5ODdmMTBjMTEwYjYyN2I4ZiIsImlhdCI6MTc3MDYzNTUwOSwiZXhwIjoxNzczMjI3NTA5fQ.1p40TsnF5e02xQ0Yk4CgbZji5GhT6Y7lEqas47ZApbc
+Authorization: Bearery eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzNTkwMSwiZXhwIjoxNzczMjI3OTAxfQ.Gq9OTDUsxEr4JSP9MGsnf3XzRsb9amPrsOZYYJd6sKE
 
 ### 5. Profil frissítése (Név és telefonszám módosítása)
 PUT {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODliZWM5ODdmMTBjMTEwYjYyN2I4ZiIsImlhdCI6MTc3MDYzNTUwOSwiZXhwIjoxNzczMjI3NTA5fQ.1p40TsnF5e02xQ0Yk4CgbZji5GhT6Y7lEqas47ZApbc
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzNTkwMSwiZXhwIjoxNzczMjI3OTAxfQ.Gq9OTDUsxEr4JSP9MGsnf3XzRsb9amPrsOZYYJd6sKE
 Content-Type: application/json
 
 {
@@ -51,5 +51,5 @@ Content-Type: application/json
     "address": "1011 Budapest, Fő utca 1."
 }
 ### 6. Felhasználó törlése 
-DELETE {{baseUrl}}/users/6989a941a66e2bdbdd8c3374
+DELETE {{baseUrl}}/users/6989c1c5d713db859db1cedf
 Content-Type: application/json

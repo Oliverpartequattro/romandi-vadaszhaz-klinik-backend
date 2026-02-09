@@ -12,7 +12,7 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    Összes felhasználó lekérése
+// @desc    1.1 Összes felhasználó lekérése
 // @route   GET /api/users
 router.get("/", async (req, res) => {
   try {
@@ -28,7 +28,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-// @desc    Az összes orvos lekérése
+// @desc    1.2 Az összes orvos lekérése
 // @route   GET /api/users/doctors
 router.get("/doctors", async (req, res) => {
   try {
@@ -44,7 +44,7 @@ router.get("/doctors", async (req, res) => {
   }
 });
 
-// @desc    Az összes páciens lekérése
+// @desc    1.3 Az összes páciens lekérése
 // @route   GET /api/users/patients
 router.get("/patients", async (req, res) => {
   try {
@@ -60,7 +60,7 @@ router.get("/patients", async (req, res) => {
 });
 
 
-// @desc    Új felhasználó regisztrálása
+// @desc    2. Új felhasználó regisztrálása
 // @route   POST /api/users/register
 router.post("/register", async (req, res) => {
   const { name, email, password, phone, tajNumber, address, role } = req.body;
@@ -95,7 +95,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// @desc    Bejelentkezés (Token generálás)
+// @desc    3. Bejelentkezés (Token generálás)
 // @route   POST /api/users/login
 router.post("/login", async (req, res) => {
   try {
@@ -128,7 +128,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// @desc    Bejelentkezett felhasználó profilja
+// @desc    4. Bejelentkezett felhasználó profilja
 // @route   GET /api/users/profile
 // A 'protect' middleware-t a route és a függvény közé tesszük
 router.get("/profile", protect, async (req, res) => {
@@ -148,7 +148,7 @@ router.get("/profile", protect, async (req, res) => {
   }
 });
 
-// @desc    Felhasználói profil frissítése
+// @desc    5. Felhasználói profil frissítése
 // @route   PUT /api/users/profile
 router.put('/profile', protect, async (req, res) => {
     try {
@@ -191,7 +191,7 @@ router.put('/profile', protect, async (req, res) => {
     }
 });
 
-// @desc    Felhasználó törlése ID alapján
+// @desc    6.Felhasználó törlése ID alapján
 // @route   DELETE /api/users/:id
 router.delete("/:id", async (req, res) => {
   try {
