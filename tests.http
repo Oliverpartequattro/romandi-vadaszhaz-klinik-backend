@@ -6,7 +6,7 @@
 GET {{baseUrl}}/users
 Content-Type: application/json
 
-### 2. Regisztráció tesztelése
+### 2. Regisztráció 
 POST {{baseUrl}}/users/register
 Content-Type: application/json
 
@@ -17,6 +17,15 @@ Content-Type: application/json
     "role": "PATIENT"
 }
 
-### 3. Felhasználó törlése (Az ID-t cseréld ki egy létezőre a listádból!)
+### 3. Bejelentkezés
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "janika@gmail.com",
+    "password": "titkosjelszo123"
+}
+
+### 4. Felhasználó törlése 
 DELETE {{baseUrl}}/users/6989aa07e68d621ab6b094b4
 Content-Type: application/json

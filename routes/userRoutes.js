@@ -82,4 +82,35 @@ router.post('/register', async (req, res) => {
     }
 });
 
+// @desc    Bejelentkezés (Token generálás)
+// @route   POST /api/users/login
+router.post('/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        console.log(`--- Bejelentkezési kísérlet: ${email} ${password} ---`);
+
+        // 1. Felhasználó keresése email alapján
+        const user = await User.findOne({ email });
+
+        // 2. Felhasználó létezésének és jelszavának ellenőrzése
+        // A matchPassword metódust korábban adtuk hozzá a User modellhez!
+        if (user && (await user.matchPassword(password))) {
+            console.log(`Sikeres belépés: ${email}`);
+            res.json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                token: generateToken(user._id)
+            });
+        } else {
+            console.warn(`Sikertelen belépés: Rossz email vagy jelszó (${email})`, user);
+            res.status(401).json({ message: 'Érvénytelen email vagy jelszó' });
+        }
+    } catch (error) {
+        console.error(`Hiba a login során:`, error.message);
+        res.status(500).json({ message: 'Szerver hiba', error: error.message });
+    }
+});
+
 export default router;
