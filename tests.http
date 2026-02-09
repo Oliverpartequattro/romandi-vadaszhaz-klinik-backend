@@ -11,8 +11,8 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Kovács János2",
-    "email": "janika@gmail.com",
+    "name": "Kovács János3",
+    "email": "janika2@gmail.com",
     "password": "titkosjelszo123",
     "role": "PATIENT"
 }
@@ -22,10 +22,10 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "janika@gmail.com",
+    "email": "janika2@gmail.com",
     "password": "titkosjelszo123"
 }
 
 ### 4. Felhasználó törlése 
-DELETE {{baseUrl}}/users/6989aa07e68d621ab6b094b4
+DELETE {{baseUrl}}/users/6989b24608a1b5c011bd40f5
 Content-Type: application/json
