@@ -2,7 +2,7 @@ import express from "express";
 import User from "../models/User.js"; // A .js kiterjesztés itt kötelező!
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
-import { protect } from "../middleware/authMiddleware.js";
+import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 // JWT token generálása

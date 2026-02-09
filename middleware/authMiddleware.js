@@ -27,3 +27,13 @@ export const protect = async (req, res, next) => {
         res.status(401).json({ message: 'Nincs jogosultság, nincs token' });
     }
 };
+
+// middleware/authMiddleware.js
+
+export const admin = (req, res, next) => {
+    if (req.user && req.user.role === 'ADMIN') {
+        next(); // Ha admin, mehet tovább
+    } else {
+        res.status(403).json({ message: 'Nincs jogosultságod, nem vagy admin!' });
+    }
+};
