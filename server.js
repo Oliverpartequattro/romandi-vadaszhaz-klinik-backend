@@ -9,7 +9,6 @@ import userRoutes from "./routes/userRoutes.js";
 import recordRoutes from "./routes/recordRoutes.js";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import fs from 'fs';
 
 
 
@@ -28,77 +27,64 @@ app.use("/api/users", userRoutes);
 app.use('/api/records', recordRoutes);
 app.get("/", (req, res) => res.send("A szerver fut!"));
 
-// --- SWAGGER KONFIGURÁCIÓ ---
+// --- SWAGGER KONFIGURÁCIÓ (MANUÁLIS ÖSSZEFŰZÉS) ---
 
-const docsDir = path.join(__dirname, "./docs");
-let combinedPaths = {};
-let combinedSchemas = {};
+// 1. Fájlok beolvasása külön-külön
+const userDocs = YAML.load(path.join(__dirname, "./docs/user.swagger.yaml"));
+const recordDocs = YAML.load(path.join(__dirname, "./docs/record.swagger.yaml"));
 
-// Beolvassuk az összes .yaml fájlt a docs mappából
-if (fs.existsSync(docsDir)) {
-    const files = fs.readdirSync(docsDir);
-    
-    files.forEach(file => {
-        if (file.endsWith('.yaml')) {
-            const filePath = path.join(docsDir, file);
-            const doc = YAML.load(filePath);
-            
-            // Path-ek (végpontok) összefűzése
-            if (doc.paths) {
-                combinedPaths = { ...combinedPaths, ...doc.paths };
-            }
-            
-            // Sémák (modellek) összefűzése a components alatt
-            if (doc.components && doc.components.schemas) {
-                combinedSchemas = { ...combinedSchemas, ...doc.components.schemas };
-            }
-        }
-    });
-}
-
+// 2. Swagger beállítások összeállítása
 const swaggerOptions = {
-    definition: {
-        openapi: "3.0.0",
-        info: {
-            title: "Klinik Rendszer API",
-            version: "1.0.0",
-            description: "A szakdolgozatomhoz készült orvosi rendszer API dokumentációja",
-        },
-        servers: [
-            {
-                url: "https://romandi-vadaszhaz-klinik-backend.vercel.app",
-                description: "Éles szerver"
-            },
-            {
-                url: "http://localhost:3000",
-                description: "Helyi fejlesztői szerver"
-            }
-        ],
-        paths: combinedPaths,
-        components: {
-            securitySchemes: {
-                bearerAuth: {
-                    type: "http",
-                    scheme: "bearer",
-                    bearerFormat: "JWT",
-                },
-            },
-            schemas: combinedSchemas // Itt jelennek meg az összes fájlból begyűjtött modellek
-        },
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "Klinik Rendszer API",
+      version: "1.0.0",
+      description: "A szakdolgozatomhoz készült orvosi rendszer API dokumentációja",
     },
-    apis: [], // Mivel manuálisan fűztük össze a YAML-eket, ez maradhat üres
+    servers: [
+      {
+        url: "https://romandi-vadaszhaz-klinik-backend.vercel.app",
+        description: "Éles szerver"
+      },
+      {
+        url: "http://localhost:3000",
+        description: "Helyi fejlesztői szerver"
+      }
+    ],
+    // Összefűzzük a végpontokat (paths)
+    paths: {
+      ...userDocs.paths,
+      ...recordDocs.paths
+    },
+    // Összefűzzük a komponenseket (schemas és securitySchemes)
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+      schemas: {
+        ...(userDocs.components?.schemas || {}),
+        ...(recordDocs.components?.schemas || {})
+      },
+    },
+  },
+  apis: [], // Üresen hagyjuk, mert manuálisan adtuk meg a definíciókat
 };
 
 const swaggerDocs = swaggerJsdoc(swaggerOptions);
 
 // CDN beállítások a Vercel statikus fájl hiba ellen
 const swaggerOptionsUI = {
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
-    customJs: [
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.js',
-    ],
-    customSiteTitle: "Klinik API Docs"
+  customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
+  customJs: [
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.js',
+  ],
+  customSiteTitle: "Klinik API Docs"
 };
 
 // Swagger UI beállítása

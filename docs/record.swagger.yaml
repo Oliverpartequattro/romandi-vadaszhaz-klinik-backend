@@ -1,35 +1,5 @@
-components:
-  schemas:
-    Record:
-      type: object
-      required:
-        - patient
-        - description
-      properties:
-        _id:
-          type: string
-          example: 65c8e1234567890123456789
-        patient:
-          oneOf:
-            - type: string
-            - $ref: '#/components/schemas/User'
-          description: A páciens ID-ja vagy a populált adatai
-        doctor:
-          oneOf:
-            - type: string
-            - $ref: '#/components/schemas/User'
-          description: Az orvos ID-ja vagy a populált adatai
-        service:
-          type: string
-          description: A szolgáltatás ID-ja
-        description:
-          type: string
-          example: "A páciens erős fejfájásra panaszkodott. Vérnyomás rendben."
-        createdAt:
-          type: string
-          format: date-time
-
-/api/records:
+paths:
+  /api/records:
   get:
     summary: Összes ellátási adat lekérése (Csak Admin)
     tags: [Records]
@@ -43,7 +13,7 @@ components:
             schema:
               type: array
               items:
-                $ref: '#/components/schemas/Record'
+                $ref: "#/components/schemas/Record"
       401:
         description: Nincs token, nincs bejelentkezve
       403:
@@ -97,3 +67,34 @@ components:
         description: A páciens kórtörténete
       403:
         description: Nincs jogosultság más adatainak megtekintéséhez
+
+components:
+  schemas:
+    Record:
+      type: object
+      required:
+        - patient
+        - description
+      properties:
+        _id:
+          type: string
+          example: 65c8e1234567890123456789
+        patient:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/User"
+          description: A páciens ID-ja vagy a populált adatai
+        doctor:
+          oneOf:
+            - type: string
+            - $ref: "#/components/schemas/User"
+          description: Az orvos ID-ja vagy a populált adatai
+        service:
+          type: string
+          description: A szolgáltatás ID-ja
+        description:
+          type: string
+          example: "A páciens erős fejfájásra panaszkodott. Vérnyomás rendben."
+        createdAt:
+          type: string
+          format: date-time
