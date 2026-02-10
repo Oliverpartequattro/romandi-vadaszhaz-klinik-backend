@@ -60,6 +60,10 @@ Content-Type: application/json
     "phone": "+36709998877",
     "address": "9022 Győr, Páciens tér 1."
 }
-### 6. Felhasználó törlése ID alapján (Admin vagy Saját maga)
+
+###6. Kijelentkezés (Token törlése a kliens oldalon, itt csak szimbolikus)
+POST {{baseUrl}}/users/logout
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDY2Nzc3MSwiZXhwIjoxNzczMjU5NzcxfQ.14GEamK8aUT1Qcl-8971DKlMmEEKYuvh91eXatLiRpM
+### 7. Felhasználó törlése ID alapján (Admin vagy Saját maga)
 DELETE {{baseUrl}}/users/6989ce21ed898330c946f57b
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzOTA3OSwiZXhwIjoxNzczMjMxMDc5fQ.E_CsdK6wY2TZlDH8ezkJsbNvhPJQI8h4tL8xEo4aum4

@@ -200,8 +200,20 @@ router.put('/profile', protect, async (req, res) => {
     }
 });
 
+// @desc    6. Kijelentkezés
+// @route   POST /api/users/logout
+router.post("/logout", protect, (req, res) => {
+    try {
+        console.log(`--- Felhasználó kijelentkezett: ${req.user.email} ---`);
+        
+        res.status(200).json({ message: "Sikeres kijelentkezés." });
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a kijelentkezés során" });
+    }
+});
 
-// @desc    6. Felhasználó törlése (Admin vagy Saját maga)
+
+// @desc    7. Felhasználó törlése (Admin vagy Saját maga)
 // @route   DELETE /api/users/:id
 router.delete("/:id", protect, async (req, res) => {
   try {

@@ -90,6 +90,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /api/users/logout:
+    post:
+      summary: Felhasználó kijelentkezése
+      description: A kliensoldali token érvénytelenítésének nyugtázása.
+      tags: [Users]
+      responses:
+        200:
+          description: Sikeres kijelentkezés
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Sikeres kijelentkezés."
+        500:
+          $ref: '#/components/responses/ServerError'
 
   /api/users/profile:
     get:
