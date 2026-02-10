@@ -5,7 +5,7 @@ import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-// @desc    1. Összes ellátási adat lekérése (ADMIN ONLY)
+// @desc    1.1 Összes ellátási adat lekérése (ADMIN ONLY)
 // @route   GET /api/records
 router.get('/', protect, admin, async (req, res) => {
     try {
@@ -13,8 +13,8 @@ router.get('/', protect, admin, async (req, res) => {
         
         // A .populate() segítségével az ID-k helyett a neveket is látjuk a válaszban
         const records = await Record.find({})
-            .populate('patient_id', 'name email tajNumber')
-            .populate('doctor_id', 'name specialization');
+            .populate('patient', 'name email tajNumber')
+            .populate('doctor', 'name specialization');
 
         res.json(records);
     } catch (error) {
@@ -25,14 +25,45 @@ router.get('/', protect, admin, async (req, res) => {
     }
 });
 
+// @desc    1.2 Egy adott páciens összes rekordja (Orvos/Admin mindent, Páciens csak a sajátját)
+// @route   GET /api/records/patient/:patientId
+router.get('/patient/:patientId', protect, async (req, res) => {
+    try {
+        const targetPatientId = req.params.patientId;
+        const currentUser = req.user;
+
+        // JOGOSULTSÁG ELLENŐRZÉSE:
+        // Csak akkor mehet tovább, ha:
+        // 1. Admin VAGY Orvos
+        // 2. Ő maga a páciens (saját ID-ját kéri le)
+        const isStaff = currentUser.role === 'ADMIN' || currentUser.role === 'DOCTOR';
+        const isSelf = currentUser._id.toString() === targetPatientId;
+
+        if (!isStaff && !isSelf) {
+            return res.status(403).json({ 
+                message: "Nincs jogosultságod más páciens kórtörténetét megtekinteni!" 
+            });
+        }
+
+        const history = await Record.find({ patient: targetPatientId })
+            .populate('doctor', 'name specialization')
+            .populate('service', 'name price')
+            .sort({ createdAt: -1 });
+
+        res.json(history);
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a lekéréskor", error: error.message });
+    }
+});
+
 // @desc   2. Új ellátási rekord létrehozása (Orvos vagy Admin)
 // @route   POST /api/records
 router.post('/', protect, doctorOrAdmin, async (req, res) => {
     try {
-        const { patient_id, appointment_id, service_id, description } = req.body;
+        const { patient, appointment_id, service_id, description } = req.body;
 
         // 1. Ellenőrizzük, hogy a páciens létezik-e
-        const patientExists = await User.findById(patient_id);
+        const patientExists = await User.findById(patient);
         if (!patientExists || patientExists.role !== 'PATIENT') {
             return res.status(404).json({ message: "A megadott páciens nem található." });
         }
@@ -40,8 +71,8 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
         // 2. Rekord létrehozása
         // A doctor_id-t automatikusan a bejelentkezett felhasználótól (req.user) vesszük
         const newRecord = new Record({
-            patient_id,
-            doctor_id: req.user._id, // Aki be van jelentkezve (orvos/admin)
+            patient,
+            doctor: req.user._id, // Aki be van jelentkezve (orvos/admin)
             appointment_id,
             service_id,
             description
