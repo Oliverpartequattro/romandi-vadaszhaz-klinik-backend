@@ -56,7 +56,7 @@ router.get('/patient/:patientId', protect, async (req, res) => {
     }
 });
 
-// @desc   2. Új ellátási rekord létrehozása (Orvos vagy Admin)
+// @desc    2. Új ellátási rekord létrehozása (Orvos vagy Admin)
 // @route   POST /api/records
 router.post('/', protect, doctorOrAdmin, async (req, res) => {
     try {
@@ -69,18 +69,22 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
         }
 
         // 2. Rekord létrehozása
-        // A doctor_id-t automatikusan a bejelentkezett felhasználótól (req.user) vesszük
         const newRecord = new Record({
             patient,
-            doctor: req.user._id, // Aki be van jelentkezve (orvos/admin)
+            doctor: req.user._id, // Aki be van jelentkezve
             appointment_id,
             service_id,
             description
         });
 
         const savedRecord = await newRecord.save();
+
+        // 3. FRISSÍTÉS: Beírjuk a rekord ID-ját a páciens (User) records tömbjébe
+        await User.findByIdAndUpdate(patient, {
+            $push: { records: savedRecord._id }
+        });
         
-        console.log(`--- Új rekord mentve: Páciens: ${patientExists.name}, Orvos: ${req.user.name} ---`);
+        console.log(`--- Új rekord mentve és hozzáfűzve a pácienshez: ${patientExists.name} ---`);
         
         res.status(201).json(savedRecord);
     } catch (error) {

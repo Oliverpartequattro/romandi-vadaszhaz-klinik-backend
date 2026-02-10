@@ -39,6 +39,12 @@ const userSchema = new mongoose.Schema(
         return this.role === "PATIENT"; // Csak páciensnél kötelező
       },
     },
+    records: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Record'
+      }
+    ],
 
     // --- CSAK ORVOS MEZŐK ---
     specialization: {

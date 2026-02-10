@@ -127,21 +127,33 @@ router.post("/login", async (req, res) => {
 
 // @desc    4. Bejelentkezett felhasználó profilja
 // @route   GET /api/users/profile
-// A 'protect' middleware-t a route és a függvény közé tesszük
 router.get("/profile", protect, async (req, res) => {
-  // Mivel a middleware már kikereste a usert és betette a req.user-be:
-  if (req.user) {
-    res.json({
-      _id: req.user._id,
-      name: req.user.name,
-      email: req.user.email,
-      phone: req.user.phone,
-      tajNumber: req.user.tajNumber,
-      address: req.user.address,
-      role: req.user.role,
+  try {
+    const user = await User.findById(req.user._id).populate({
+      path: 'records',
+      // EGYETLEN populate-en belül adjuk meg a tömböt az al-adatoknak
+      populate: [
+        { path: 'doctor', select: 'name specialization email' },
+        { path: 'service', select: 'name description' }
+      ]
     });
-  } else {
-    res.status(404).json({ message: "Felhasználó nem található" });
+
+    if (user) {
+      res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        tajNumber: user.tajNumber,
+        address: user.address,
+        role: user.role,
+        records: user.records // Most már egyszerre lesz benne a doctor és a service is
+      });
+    } else {
+      res.status(404).json({ message: "Felhasználó nem található" });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Szerver hiba", error: error.message });
   }
 });
 

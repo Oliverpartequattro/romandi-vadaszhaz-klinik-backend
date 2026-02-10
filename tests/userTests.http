@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
@@ -38,9 +38,17 @@ Content-Type: application/json
     "email": "admin@gmail.com",
     "password": "pwd"
 }
+###
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "janos@gmail.com",
+    "password": "titkosjelszo123"
+}
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGEzZTcwNWNmNzRjNjQwYzFmNGIxYyIsImlhdCI6MTc3MDY2NzY0NywiZXhwIjoxNzczMjU5NjQ3fQ.Yzm4-y1NAFzJkpO77YH0cNPHe3w-LsaFJPYju9DvB3w
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDcxNzk5NSwiZXhwIjoxNzczMzA5OTk1fQ.ZXSpY_mIvvzw-eDjwke76xvNHw5oknhm0ynEALcqDjU
 
 ### 5. Profil frissítése (Név és telefonszám módosítása)
 PUT {{baseUrl}}/users/profile
