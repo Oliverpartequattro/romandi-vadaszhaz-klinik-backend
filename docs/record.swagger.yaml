@@ -1,0 +1,99 @@
+components:
+  schemas:
+    Record:
+      type: object
+      required:
+        - patient
+        - description
+      properties:
+        _id:
+          type: string
+          example: 65c8e1234567890123456789
+        patient:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/User'
+          description: A páciens ID-ja vagy a populált adatai
+        doctor:
+          oneOf:
+            - type: string
+            - $ref: '#/components/schemas/User'
+          description: Az orvos ID-ja vagy a populált adatai
+        service:
+          type: string
+          description: A szolgáltatás ID-ja
+        description:
+          type: string
+          example: "A páciens erős fejfájásra panaszkodott. Vérnyomás rendben."
+        createdAt:
+          type: string
+          format: date-time
+
+/api/records:
+  get:
+    summary: Összes ellátási adat lekérése (Csak Admin)
+    tags: [Records]
+    security:
+      - bearerAuth: []
+    responses:
+      200:
+        description: Sikeres lekérdezés
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/Record'
+      401:
+        description: Nincs token, nincs bejelentkezve
+      403:
+        description: Nincs admin jogosultság
+
+  post:
+    summary: Új ellátási rekord létrehozása (Orvos vagy Admin)
+    tags: [Records]
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - patient
+              - description
+            properties:
+              patient:
+                type: string
+                description: Páciens ID-ja
+              service_id:
+                type: string
+              description:
+                type: string
+              appointment_id:
+                type: string
+    responses:
+      201:
+        description: Rekord sikeresen létrehozva
+      404:
+        description: A páciens nem található
+
+/api/records/patient/{patientId}:
+  get:
+    summary: Egy adott páciens összes rekordja (Kórtörténet)
+    description: Orvos/Admin bárkit lekérhet, a Páciens csak a sajátját.
+    tags: [Records]
+    security:
+      - bearerAuth: []
+    parameters:
+      - in: path
+        name: patientId
+        required: true
+        schema:
+          type: string
+    responses:
+      200:
+        description: A páciens kórtörténete
+      403:
+        description: Nincs jogosultság más adatainak megtekintéséhez
