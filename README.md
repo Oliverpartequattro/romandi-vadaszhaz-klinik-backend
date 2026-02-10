@@ -1,4 +1,3 @@
-````md
 # 🏥 Klinik Backend - Fejlesztői Dokumentáció
 
 Webalapú klinikai időpontfoglaló rendszer backendje. Ez a dokumentáció a frontend fejlesztő munkáját hivatott segíteni.
@@ -42,7 +41,6 @@ A rendszer egy közös `User` modellt használ, de a beküldendő mezők a `role
    headers: {
      "Authorization": `Bearer <IDE_MÁSOLD_A_TOKENT>`
    }
-````
 
 **Kijelentkezés:**
 Hívd meg a `/api/users/logout` végpontot, majd töröld a tokent a kliens oldalon
