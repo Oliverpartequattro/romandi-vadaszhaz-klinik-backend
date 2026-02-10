@@ -1,5 +1,6 @@
 import express from 'express';
 import Record from '../models/Record.js';
+import User from '../models/User.js';
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();

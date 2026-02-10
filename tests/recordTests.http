@@ -36,3 +36,14 @@ Content-Type: application/json
 GET {{baseUrl}}/records
 Authorization: Bearer {{adminLogin.response.body.token}}
 Content-Type: application/json
+
+### 2. Új rekord létrehozása (ORVOSKÉNT)
+POST {{baseUrl}}/records
+Authorization: Bearer {{doctorLogin.response.body.token}}
+Content-Type: application/json
+
+{
+    "patient_id": "6989c26f47278217e6676824",
+    "description": "A páciens erős fejfájásra panaszkodott. Vérnyomás rendben, pihenést javasoltam.",
+    "service_id": "65c1234567890123456789ab"
+}
