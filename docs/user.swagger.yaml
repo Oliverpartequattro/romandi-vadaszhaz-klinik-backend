@@ -14,8 +14,14 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/User'
+        401:
+          $ref: '#/components/responses/Unauthorized'
         403:
           description: Nincs admin jogosultságod
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/users/doctors:
     get:
@@ -24,18 +30,8 @@ paths:
       responses:
         200:
           description: Orvosok listája
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    _id: { type: string, example: "698a3e705cf74c640c1f4b1c" }
-                    name: { type: string, example: "Dr. Példa János" }
-                    specialization: { type: string, example: "Kardiológus" }
-                    email: { type: string, example: "drjanos@klinika.hu" }
-                    phone: { type: string, example: "+36301112233" }
+        500:
+          $ref: '#/components/responses/ServerError'
 
   /api/users/patients:
     get:
@@ -46,12 +42,8 @@ paths:
       responses:
         200:
           description: Páciensek listája minden adattal
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+        401:
+          $ref: '#/components/responses/Unauthorized'
         403:
           description: Csak orvosok vagy adminok férhetnek hozzá
 
@@ -69,7 +61,11 @@ paths:
         201:
           description: Felhasználó létrehozva
         400:
-          description: Már létező email
+          description: Már létező email vagy hiányzó adatok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /api/users/login:
     post:
@@ -83,31 +79,17 @@ paths:
               type: object
               required: [email, password]
               properties:
-                email: 
-                  type: string
-                  example: "paciens@gmail.com"
-                password: 
-                  type: string
-                  example: "pwd123"
+                email: { type: string, example: "paciens@gmail.com" }
+                password: { type: string, example: "pwd123" }
       responses:
         200:
           description: Sikeres bejelentkezés
         401:
-          description: Érvénytelen adatok
-
-  /api/users/logout:
-    post:
-      summary: Felhasználó kijelentkezése
-      tags: [Users]
-      responses:
-        200:
-          description: Sikeres kijelentkezés
+          description: Érvénytelen email vagy jelszó
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  message: { type: string, example: "Sikeres kijelentkezés." }
+                $ref: '#/components/schemas/Error'
 
   /api/users/profile:
     get:
@@ -117,21 +99,13 @@ paths:
         - bearerAuth: []
       responses:
         200:
-          description: Profil adatok a páciens kórtörténetével együtt
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/User'
-                  - type: object
-                    properties:
-                      records:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/RecordPopulated'
+          description: Profil adatok
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        404:
+          $ref: '#/components/responses/NotFound'
     put:
       summary: Saját profil frissítése
-      description: Frissíti a bejelentkezett felhasználó adatait és új tokent generál.
       tags: [Users]
       security:
         - bearerAuth: []
@@ -144,10 +118,10 @@ paths:
       responses:
         200:
           description: Profil sikeresen frissítve
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/User'
+        400:
+          description: Hibás beviteli adatok
+        401:
+          $ref: '#/components/responses/Unauthorized'
 
   /api/users/{id}:
     delete:
@@ -165,6 +139,16 @@ paths:
       responses:
         200:
           description: Sikeres törlés
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        403:
+          description: Nincs jogosultság a törléshez (pl. más profilja)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        404:
+          $ref: '#/components/responses/NotFound'
 
 components:
   securitySchemes:
@@ -172,8 +156,32 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Nincs érvényes token (Nincs bejelentkezve)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: A keresett elem nem található
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ServerError:
+      description: Belső szerverhiba
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   
   schemas:
+    Error:
+      type: object
+      properties:
+        message: { type: string, example: "Hiba történt." }
     User:
       type: object
       properties:
