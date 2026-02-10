@@ -91,15 +91,40 @@ paths:
         401:
           description: Érvénytelen adatok
 
+  /api/users/logout:
+    post:
+      summary: Felhasználó kijelentkezése
+      tags: [Users]
+      responses:
+        200:
+          description: Sikeres kijelentkezés
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string, example: "Sikeres kijelentkezés." }
+
   /api/users/profile:
     get:
-      summary: Bejelentkezett felhasználó saját profilja
+      summary: Bejelentkezett felhasználó saját profilja (Rekordokkal)
       tags: [Users]
       security:
         - bearerAuth: []
       responses:
         200:
-          description: Profil adatok
+          description: Profil adatok a páciens kórtörténetével együtt
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/User'
+                  - type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RecordPopulated'
     put:
       summary: Saját profil frissítése
       description: Frissíti a bejelentkezett felhasználó adatait és új tokent generál.
@@ -184,3 +209,22 @@ components:
         phone: { type: string }
         address: { type: string }
         tajNumber: { type: string }
+
+    # Speciális séma a profilban megjelenő, már "kibontott" rekordokhoz
+    RecordPopulated:
+      type: object
+      properties:
+        _id: { type: string }
+        description: { type: string }
+        doctor:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string }
+            specialization: { type: string }
+        service:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string }
+        createdAt: { type: string, format: date-time }
