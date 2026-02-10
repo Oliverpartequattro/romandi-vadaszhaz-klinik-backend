@@ -34,6 +34,7 @@ app.get("/", (req, res) => res.send("A szerver fut!"));
 // 1. Fájlok beolvasása külön-külön
 const userDocs = YAML.load(path.join(__dirname, "./docs/user.swagger.yaml"));
 const recordDocs = YAML.load(path.join(__dirname, "./docs/record.swagger.yaml"));
+const appointmentDocs = YAML.load(path.join(__dirname, "./docs/appointment.swagger.yaml"));
 
 // 2. Swagger beállítások összeállítása
 const swaggerOptions = {
@@ -48,16 +49,13 @@ const swaggerOptions = {
       {
         url: "https://romandi-vadaszhaz-klinik-backend.vercel.app",
         description: "Éles szerver"
-      },
-      {
-        url: "http://localhost:3000",
-        description: "Helyi fejlesztői szerver"
       }
     ],
     // Összefűzzük a végpontokat (paths)
     paths: {
       ...userDocs.paths,
-      ...recordDocs.paths
+      ...recordDocs.paths,
+      ...appointmentDocs.paths,
     },
     // Összefűzzük a komponenseket (schemas és securitySchemes)
     components: {
@@ -70,7 +68,8 @@ const swaggerOptions = {
       },
       schemas: {
         ...(userDocs.components?.schemas || {}),
-        ...(recordDocs.components?.schemas || {})
+        ...(recordDocs.components?.schemas || {}),
+        ...(appointmentDocs.components?.schemas || {})
       },
     },
   },
