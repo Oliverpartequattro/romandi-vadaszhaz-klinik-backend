@@ -100,6 +100,3 @@ Itt az ID-k helyett már kész objektumokat kapsz
 * **403 Forbidden:** Van tokened, de nincs jogod ehhez (pl. betegként akarsz admin listát látni).
 * **404 Not Found:** Rossz ID-t küldtél, az adott elem nem létezik.
 * **500 Server Error:** Hiba történt a szerveren.
-
-```
-```
