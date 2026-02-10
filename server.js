@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import YAML from 'yamljs'; // Új import a YAML fájlok fix betöltéséhez
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
+import recordRoutes from "./routes/recordRoutes.js";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
@@ -21,6 +22,7 @@ app.use(express.json());
 
 // --- ROUTES ---
 app.use("/api/users", userRoutes);
+app.use('/api/records', recordRoutes);
 app.get("/", (req, res) => res.send("A szerver fut!"));
 
 // --- SWAGGER KONFIGURÁCIÓ ---
