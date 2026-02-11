@@ -1,102 +1,109 @@
 # 🏥 Klinik Backend - Fejlesztői Dokumentáció
 
-Webalapú klinikai időpontfoglaló rendszer backendje. Ez a dokumentáció a frontend fejlesztő munkáját hivatott segíteni.
+Webalapú klinikai időpontfoglaló rendszer backendje. Ez a dokumentáció a frontend fejlesztő munkáját hivatott segíteni a pontos mezőkkel és workflow-kkal.
 
 ## 🔗 Elérhetőségek
-- **API Base URL:** `https://romandi-vadaszhaz-klinik-backend.vercel.app`
-- **Interaktív Dokumentáció:** [/api-docs](https://romandi-vadaszhaz-klinik-backend.vercel.app/api-docs) (Swagger UI)
+
+* **API Base URL:** `https://romandi-vadaszhaz-klinik-backend.vercel.app`
+* **Interaktív Dokumentáció:** [/api-docs](https://romandi-vadaszhaz-klinik-backend.vercel.app/api-docs) (Swagger UI)
 
 ---
 
 ## 🛠 Technológiai Stack
-- **Runtime:** Node.js (Express)
-- **Adatbázis:** MongoDB Atlas
-- **Auth:** JWT (JSON Web Token)
-- **Dokumentáció:** Swagger / OpenAPI 3.0
+
+* **Runtime:** Node.js (Express)
+* **Adatbázis:** MongoDB Atlas
+* **Auth:** JWT (JSON Web Token)
+* **Validáció:** Mongoose Schemas & Custom Validators
 
 ---
 
-## 👤 Felhasználói Modellek & Regisztráció
+## 👤 Felhasználói Kezelés (Users)
 
-A rendszer egy közös `User` modellt használ, de a beküldendő mezők a `role` (szerepkör) értékétől függően változnak.
+### Regisztráció és Mezők
 
-### Közös mezők (Mindenki)
-- `name`, `email`, `password`, `phone`
+A rendszer közös modellt használ, de a validáció intelligens: a `role` alapján dől el, mi kötelező.
 
-### Szerepkör alapú mezők
-| Szerepkör (`role`) | Speciális mezők | Leírás |
-| :--- | :--- | :--- |
-| **PATIENT** | `tajNumber`, `address` | Alapértelmezett szerepkör, ezek kötelezőek a regisztrációnál. |
-| **DOCTOR** | `specialization` | Csak orvosnál kötelező, nincs lakcím/TAJ mezője. |
-| **ADMIN** | - | Teljes hozzáférés a rendszerhez. |
+| Mező | Típus | Leírás | Validáció |
+| --- | --- | --- | --- |
+| `name` | String | Teljes név | Kötelező |
+| `email` | String | Egyedi email | Regex ellenőrzött |
+| `password` | String | Minimum 8 karakter | Min. 1 betű + 1 szám |
+| `phone` | String | Magyar tel. szám | `+36` vagy `06` formátum |
+| `tajNumber` | String | 9 számjegy | **Csak PATIENT esetén** kötelező |
+| `address` | String | Lakcím | **Csak PATIENT esetén** kötelező |
+| `specialization` | String | Szakterület | **Csak DOCTOR esetén** kötelező |
 
----
+### 🔄 Profil Frissítés (PUT `/api/users/profile`)
 
-## 🔐 Frontend Workflow (Token kezelés)
+**Fontos szabály:** Csak azokat a mezőket küldd el, amiket a felhasználó ténylegesen módosított!
 
-1. **Bejelentkezés:** Küldj egy `POST` kérést az `/api/users/login` végpontra.
-2. **Token tárolása:** A válaszban érkező `token`-t mentsd el (`localStorage` vagy `cookie`).
-3. **Autorizáció:** Minden védett kérésnél (pl. `/profile`, `/appointments`) küldd el a headert:
-   ```javascript
-   headers: {
-     "Authorization": `Bearer <IDE_MÁSOLD_A_TOKENT>`
-   }
-
-**Kijelentkezés:**
-Hívd meg a `/api/users/logout` végpontot, majd töröld a tokent a kliens oldalon
-(`localStorage.removeItem('token')`).
+* Ha a jelszó mező üres az űrlapon, **ne küldd el** a kérésben.
+* A szerver csak akkor futtat validációt és titkosítást, ha a mező értéke változott.
 
 ---
 
-## 📅 Időpontok & Beutalási Rendszer (Appointments)
+## 🩺 Szolgáltatások és Idősávok (Services)
 
-Az időpontfoglalás összeköti a pácienst, az orvost és a szolgáltatást.
+A `Service` nálad nem egy statikus lista, hanem az orvosok által meghirdetett **szabad időpontok**.
 
-### Fontos mezők az Időpontban
+### Szolgáltatás létrehozása (POST `/api/services`)
 
-* **startTime / endTime:** Az ellátás pontos kezdete és vége (ISO Date formátum).
-* **referral_type:**
-
-  * `"SELF"`: A páciens saját magának foglalt időpontot.
-  * `"DOCTOR"`: Egy másik orvos utalta be a pácienst
-    (ilyenkor a `referred_by` mező tartalmazza az orvos ID-ját).
-* **status:** Alapértelmezett értéke `"BOOKED"`.
-
----
-
-## 🛠 Leggyakoribb kérések példákkal
-
-### 1. Bejelentkezés (Login)
-
-**POST** `/api/users/login`
+Orvosként vagy Adminként tudsz új idősávot rögzíteni.
 
 ```json
 {
-  "email": "paciens@gmail.com",
-  "password": "jelszo123"
+  "doctor_id": "698a3e705cf74c640c1f4b1c",
+  "topic": "Kardiológia",
+  "description": "Szívultrahang és konzultáció",
+  "location": "204-es vizsgáló",
+  "date": "2026-05-20T10:00:00.000Z",
+  "price": "1 lélek" 
 }
+
 ```
 
-### 2. Saját profil és leletek (Medical Records)
-
-**GET** `/api/users/profile`
-(Token szükséges!)
-
-Visszaadja a felhasználó adatait, és a `records` listában az összes eddigi orvosi leletét, orvosi adatokkal együtt.
-
-### 3. Összes időpont lekérése (Csak Admin)
-
-**GET** `/api/appointments`
-(Admin Token szükséges!)
-
-Itt az ID-k helyett már kész objektumokat kapsz
-(`doctor_id.name`, `patient_id.email`), így nem kell külön lekérdezéseket futtatnod a nevekhez.
+*Megjegyzés: A `price` mező String, így elfogad számot ("25000") vagy egyedi szöveget is.*
 
 ---
 
-## ⚠️ Hibakódok, amikre figyelj
+## 🔐 Frontend Workflow & Auth
 
-* **401 Unauthorized:** Nincs tokened, vagy lejárt. Irányítsd a felhasználót a Login oldalra!
-* **403 Forbidden:** Van tokened, de nincs jogod ehhez (pl. betegként akarsz admin listát látni).
-* **404 Not Found:** Rossz ID-t küldtél, az adott elem nem létezik.
-* **500 Server Error:** Hiba történt a szerveren.
+1. **Token tárolása:** Bejelentkezés után a kapott `token`-t `localStorage`-ba tedd.
+2. **Autorizáció:** Minden védett kérésnél add meg: `Authorization: Bearer <token>`.
+3. **Kijelentkezés:** Töröld a tokent a kliens oldalon, és hívd meg a `/api/users/logout` végpontot.
+
+---
+
+## 📅 Időpontfoglalás (Appointments)
+
+Az időpontfoglalás (Appointment) összeköti a pácienst egy konkrét `Service`-szel.
+
+* **referral_type:** `"SELF"` (saját) vagy `"DOCTOR"` (beutaló).
+* **status:** - `PENDING`: Beküldve, orvosra vár.
+* `CONFIRMED`: Az orvos jóváhagyta.
+* `PROPOSED`: Az orvos módosított az időponton, a páciensnek el kell fogadnia.
+
+
+
+---
+
+## ⚠️ Hibakezelés (Frontend Tippek)
+
+A backend most már részletes hibaüzeneteket küld a `400 Bad Request` mellé:
+
+```json
+{
+  "message": "Validációs hiba",
+  "error": "A TAJ számnak pontosan 9 számjegyből kell állnia, A jelszónak legalább 8 karakterből kell állnia..."
+}
+
+```
+
+* **401 Unauthorized:** Irányíts a Loginra!
+* **403 Forbidden:** Nincs jogosultsága (pl. beteg akar idősávot törölni).
+* **400 Bad Request:** Formátum hiba vagy hiányzó kötelező mező.
+
+---
+
+*Utolsó frissítés: 2026. február 11.*
