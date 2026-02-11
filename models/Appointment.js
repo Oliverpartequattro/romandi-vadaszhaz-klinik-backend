@@ -26,7 +26,7 @@ const appointmentSchema = new mongoose.Schema({
             message: "A befejezési időpontnak később kell lennie, mint a kezdésnek!"
         }
     },
-    status: { type: String, default: 'BOOKED' },
+    status: { type: String, default: 'PENDING' },
     
     // Új mezők a beutalóhoz
     referral_type: { 
