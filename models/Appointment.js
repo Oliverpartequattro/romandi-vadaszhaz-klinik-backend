@@ -4,8 +4,28 @@ const appointmentSchema = new mongoose.Schema({
     doctor_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     patient_id: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     service_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Service', required: true },
-    startTime: { type: Date, required: true },
-    endTime: { type: Date, required: true },
+    startTime: { 
+        type: Date, 
+        required: [true, "Kezdési időpont megadása kötelező"],
+        // Validátor: Ne lehessen múltbeli időpontot foglalni
+        validate: {
+            validator: function(value) {
+                return value > new Date();
+            },
+            message: "Az időpont nem lehet a múltban!"
+        }
+    },
+    endTime: { 
+        type: Date, 
+        required: [true, "Befejezési időpont megadása kötelező"],
+        // Validátor: A befejezésnek a kezdés után kell lennie
+        validate: {
+            validator: function(value) {
+                return value > this.startTime;
+            },
+            message: "A befejezési időpontnak később kell lennie, mint a kezdésnek!"
+        }
+    },
     status: { type: String, default: 'BOOKED' },
     
     // Új mezők a beutalóhoz
