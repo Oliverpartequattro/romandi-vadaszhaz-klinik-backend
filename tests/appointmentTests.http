@@ -105,3 +105,11 @@ Content-Type: application/json
 {
     "status": "CONFIRMED"
 }
+
+### 2.1 Páciens saját időpontjainak lekérése
+GET {{baseUrl}}/appointments/my
+Authorization: Bearer {{patientLogin.response.body.token}}
+
+### 2.2 Orvos saját beosztásának lekérése
+GET {{baseUrl}}/appointments/my
+Authorization: Bearer {{doctorLogin.response.body.token}}

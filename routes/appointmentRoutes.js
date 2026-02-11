@@ -110,4 +110,32 @@ router.put('/:id', protect, async (req, res) => {
     }
 });
 
+// @desc    4. Bejelentkezett felhasználó saját időpontjainak lekérése
+// @route   GET /api/appointments/my
+router.get('/my', protect, async (req, res) => {
+    try {
+        let filter = {};
+
+        // Ha páciens, akkor a saját foglalásait látja
+        if (req.user.role === 'PATIENT') {
+            filter = { patient_id: req.user._id };
+        } 
+        // Ha orvos, akkor a hozzá érkező foglalásokat látja
+        else if (req.user.role === 'DOCTOR') {
+            filter = { doctor_id: req.user._id };
+        } 
+        // Admin esetén hagyhatjuk üresen is (mindent lát), vagy korlátozhatjuk
+
+        const myAppointments = await Appointment.find(filter)
+            .populate('doctor_id', 'name specialization phone')
+            .populate('patient_id', 'name email phone')
+            .populate('service_id', 'topic location price')
+            .sort({ startTime: 1 }); // Időrendben: legközelebbi legelöl
+
+        res.json(myAppointments);
+    } catch (error) {
+        res.status(500).json({ message: 'Hiba a saját időpontok lekérésekor', error: error.message });
+    }
+});
+
 export default router;
