@@ -17,11 +17,12 @@ const appointmentSchema = new mongoose.Schema({
     },
     endTime: { 
         type: Date, 
-        required: [true, "Befejezési időpont megadása kötelező"],
         // Validátor: A befejezésnek a kezdés után kell lennie
         validate: {
             validator: function(value) {
-                return value > this.startTime;
+                if(value != null) { // Csak akkor ellenőrizzük, ha van megadva endTime
+                    return value > this.startTime;
+                }
             },
             message: "A befejezési időpontnak később kell lennie, mint a kezdésnek!"
         }

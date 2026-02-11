@@ -37,7 +37,7 @@ router.post('/', protect, async (req, res) => {
             patient_id: req.user.role === 'PATIENT' ? req.user._id : req.body.patient_id,
             service_id,
             startTime,
-            endTime,
+            endTime : endTime || null, // Nem kötelező megadni
             status: 'PENDING', // Alapértelmezetten jóváhagyásra vár
             referral_type: final_referral_type,
             referred_by: final_referred_by,
@@ -49,7 +49,7 @@ router.post('/', protect, async (req, res) => {
         // Visszaküldés előtt populáljuk, hogy a frontend látványos választ kapjon
         const populatedAppointment = await Appointment.findById(savedAppointment._id)
             .populate('doctor_id', 'name specialization')
-            .populate('service_id', 'name');
+            .populate('service_id', 'topic location price');
 
         res.status(201).json(populatedAppointment);
     } catch (error) {
@@ -67,37 +67,42 @@ router.put('/:id', protect, async (req, res) => {
             return res.status(404).json({ message: 'Az időpont nem található' });
         }
 
-        // JOGOSULTSÁG ELLENŐRZÉS: 
-        // Csak az admin VAGY az az orvos módosíthatja, akihez az időpont szól
+        // --- JOGOSULTSÁG ELLENŐRZÉS ---
         const isOwnerDoctor = appointment.doctor_id.toString() === req.user._id.toString();
+        const isOwnerPatient = appointment.patient_id.toString() === req.user._id.toString();
         const isAdmin = req.user.role === 'ADMIN';
 
-        if (!isOwnerDoctor && !isAdmin) {
-            return res.status(403).json({ message: 'Nincs jogosultsága más orvos időpontját módosítani' });
+        // Ha egyik sem igaz, akkor dobunk 403-at
+        if (!isOwnerDoctor && !isOwnerPatient && !isAdmin) {
+            return res.status(403).json({ message: 'Nincs jogosultsága ehhez az időponthoz' });
         }
 
-        // Mezők frissítése
+        // --- MEZŐK FRISSÍTÉSE ---
         const { startTime, endTime, status, service_id } = req.body;
 
         if (startTime) appointment.startTime = startTime;
         if (endTime) appointment.endTime = endTime;
         if (service_id) appointment.service_id = service_id;
 
-        // Logika: Ha az orvos változtat az időponton, a státusz PROPOSED lesz, 
-        // kivéve ha csak simán elfogadja (CONFIRMED)
+        // --- OKOS STÁTUSZ LOGIKA ---
         if (status) {
+            // Megszorítás: A páciens csak CONFIRMED-re (elfogadás) vagy CANCELLED-re (lemondás) válthat
+            if (isOwnerPatient && !['CONFIRMED', 'CANCELLED'].includes(status) && !isAdmin) {
+                return res.status(403).json({ message: 'Páciensként csak elfogadni vagy lemondani tudod az időpontot' });
+            }
             appointment.status = status;
-        } else if (startTime || endTime) {
+        } else if ((startTime || endTime) && (isOwnerDoctor || isAdmin)) {
+            // Ha az orvos módosít időt, az státuszváltással jár
             appointment.status = 'PROPOSED';
         }
 
         const updatedAppointment = await appointment.save();
 
-        // Frissített adatok visszaküldése populálva
+        // Frissített adatok visszaküldése (topic-ot használunk name helyett, ahogy a sémádban van!)
         const result = await Appointment.findById(updatedAppointment._id)
             .populate('doctor_id', 'name specialization')
             .populate('patient_id', 'name email')
-            .populate('service_id', 'name');
+            .populate('service_id', 'topic location price'); // Itt javítottam 'topic'-ra
 
         res.json(result);
     } catch (error) {
