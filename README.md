@@ -1,6 +1,6 @@
 # 🏥 Klinik Backend - Fejlesztői Dokumentáció
 
-Webalapú klinikai időpontfoglaló rendszer backendje. Ez a dokumentáció a frontend fejlesztő munkáját hivatott segíteni a pontos mezőkkel és workflow-kkal.
+Webalapú klinik időpontfoglaló rendszer backendje. Ez a dokumentáció a frontend fejlesztő munkáját hivatott segíteni a pontos mezőkkel és workflow-kkal.
 
 ## 🔗 Elérhetőségek
 
