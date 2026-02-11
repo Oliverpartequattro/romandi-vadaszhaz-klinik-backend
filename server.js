@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import recordRoutes from "./routes/recordRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
+import serviceRoutes from "./routes/serviceRoutes.js";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
@@ -27,6 +28,7 @@ app.use(express.json());
 app.use("/api/users", userRoutes);
 app.use('/api/records', recordRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/services', serviceRoutes);
 app.get("/", (req, res) => res.send("A szerver fut!"));
 
 // --- SWAGGER KONFIGURÁCIÓ (MANUÁLIS ÖSSZEFŰZÉS) ---
@@ -35,6 +37,7 @@ app.get("/", (req, res) => res.send("A szerver fut!"));
 const userDocs = YAML.load(path.join(__dirname, "./docs/user.swagger.yaml"));
 const recordDocs = YAML.load(path.join(__dirname, "./docs/record.swagger.yaml"));
 const appointmentDocs = YAML.load(path.join(__dirname, "./docs/appointment.swagger.yaml"));
+const serviceDocs = YAML.load(path.join(__dirname, "./docs/service.swagger.yaml"));
 
 // 2. Swagger beállítások összeállítása
 const swaggerOptions = {
@@ -56,6 +59,7 @@ const swaggerOptions = {
       ...userDocs.paths,
       ...recordDocs.paths,
       ...appointmentDocs.paths,
+      ...serviceDocs.paths,
     },
     // Összefűzzük a komponenseket (schemas és securitySchemes)
     components: {
@@ -69,7 +73,8 @@ const swaggerOptions = {
       schemas: {
         ...(userDocs.components?.schemas || {}),
         ...(recordDocs.components?.schemas || {}),
-        ...(appointmentDocs.components?.schemas || {})
+        ...(appointmentDocs.components?.schemas || {}),
+        ...(serviceDocs.components?.schemas || {})
       },
     },
   },

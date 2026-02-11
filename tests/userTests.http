@@ -19,16 +19,7 @@ Content-Type: application/json
 POST {{baseUrl}}/users/register
 Content-Type: application/json
 
-{
-    "name": "Doktor János A Második",
-    "email": "doktorjani2@gmail.com",
-    "password": "doktorcigany2",
-    "phone": "+36301234567",
-    "tajNumber": "666666666",
-    "address": "9022 Győr, Doktor tér 2.",
-    "specialization": "Végbéltükrözés",
-    "role": "DOCTOR"
-}
+ 
 
 ### 3. Bejelentkezés
 POST {{baseUrl}}/users/login

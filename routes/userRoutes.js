@@ -166,9 +166,12 @@ router.get("/profile", protect, async (req, res) => {
 // @route   PUT /api/users/profile
 router.put('/profile', protect, async (req, res) => {
     try {
+        console.log(req.body);
         const user = await User.findById(req.user._id);
 
         if (user) {
+          console.log(user);
+          
             // Csak azokat a mezőket frissítjük, amik jönnek a kérésben, 
             // különben megtartjuk a régit
             user.name = req.body.name || user.name;
