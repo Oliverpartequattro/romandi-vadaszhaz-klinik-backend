@@ -15,28 +15,85 @@ paths:
                 items:
                   $ref: '#/components/schemas/AppointmentResponse'
         401:
-          $ref: '#/components/responses/Unauthorized'
+          description: Nincs érvényes token (Unauthorized)
         403:
           description: Nincs admin jogosultságod
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
         500:
-          description: Szerveroldali hiba az adatok lekérésekor
+          description: Szerveroldali hiba
+
+    post:
+      summary: Új időpont igénylése (Páciens vagy Orvos)
+      tags: [Appointments]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [doctor_id, service_id, startTime, endTime]
+              properties:
+                doctor_id: { type: string, example: "698a3e705cf74c640c1f4b1c" }
+                service_id: { type: string, example: "65c1234567890abc" }
+                startTime: { type: string, format: date-time, example: "2026-02-15T10:00:00.000Z" }
+                endTime: { type: string, format: date-time, example: "2026-02-15T10:30:00.000Z" }
+                patient_id: { type: string, description: "Csak akkor kell küldeni, ha Orvos rögzíti a páciens helyett", example: "6989c26f47278217e6676824" }
+                referral_type: { type: string, enum: [SELF, DOCTOR], example: "SELF" }
+                referred_by: { type: string, description: "Beutaló orvos ID-ja", example: "698d3e705cf74c640c1f4b1d" }
+      responses:
+        201:
+          description: Időpont sikeresen létrehozva (Alapértelmezett státusz: PENDING)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/AppointmentResponse'
+        400:
+          description: Validációs hiba (pl. múltbeli dátum vagy hibás formátum)
+
+  /api/appointments/{id}:
+    put:
+      summary: Időpont módosítása vagy válaszadás (Csak Admin vagy a kijelölt Orvos)
+      description: Ha az orvos módosítja az időpontot, a státusz automatikusan PROPOSED lesz. Ha csak elfogadja, a státuszt CONFIRMED-re kell állítani.
+      tags: [Appointments]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string }
+          example: "698c5f145069be97c382db6a"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                startTime: { type: string, format: date-time }
+                endTime: { type: string, format: date-time }
+                status: { type: string, enum: [PENDING, CONFIRMED, PROPOSED, CANCELLED] }
+                service_id: { type: string }
+      responses:
+        200:
+          description: Időpont sikeresen frissítve
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentResponse'
+        403:
+          description: Nincs jogosultságod (nem te vagy a kijelölt orvos)
+        404:
+          description: Az időpont nem található
+
+
 
 components:
   schemas:
     AppointmentResponse:
       type: object
       properties:
-        _id:
-          type: string
-          example: "698c5f145069be97c382db6a"
+        _id: { type: string, example: "698c5f145069be97c382db6a" }
         doctor_id:
           type: object
           properties:
@@ -55,21 +112,10 @@ components:
           properties:
             _id: { type: string, example: "65c1234567890abc" }
             name: { type: string, example: "Szívultrahang" }
-        startTime:
-          type: string
-          format: date-time
-          example: "2026-02-15T09:00:00.000Z"
-        endTime:
-          type: string
-          format: date-time
-          example: "2026-02-15T09:30:00.000Z"
-        status:
-          type: string
-          example: "BOOKED"
-        referral_type:
-          type: string
-          enum: [SELF, DOCTOR]
-          example: "DOCTOR"
+        startTime: { type: string, format: date-time, example: "2026-02-15T09:00:00.000Z" }
+        endTime: { type: string, format: date-time, example: "2026-02-15T09:30:00.000Z" }
+        status: { type: string, enum: [PENDING, CONFIRMED, PROPOSED, CANCELLED], example: "PENDING" }
+        referral_type: { type: string, enum: [SELF, DOCTOR], example: "DOCTOR" }
         referred_by:
           nullable: true
           type: object
@@ -77,10 +123,7 @@ components:
             _id: { type: string, example: "698d3e705cf74c640c1f4b1d" }
             name: { type: string, example: "Dr. Háziorvos Eszter" }
             specialization: { type: string, example: "Háziorvos" }
-        createdAt:
-          type: string
-          format: date-time
-          example: "2026-02-10T11:00:00.000Z"
+        createdAt: { type: string, format: date-time, example: "2026-02-10T11:00:00.000Z" }
 
     Error:
       type: object
