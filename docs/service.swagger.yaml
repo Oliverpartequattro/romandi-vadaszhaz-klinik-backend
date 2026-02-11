@@ -1,1 +1,131 @@
 paths:
+  /api/services:
+    get:
+      summary: Összes szolgáltatás lekérése
+      description: Publikus végpont az összes elérhető orvosi szolgáltatás/idősáv listázásához.
+      tags: [Services]
+      responses:
+        200:
+          description: A szolgáltatások listája
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceResponse'
+              example:
+                - _id: "65c1234567890abc11111111"
+                  doctor_id: "698a3e705cf74c640c1f4b1c"
+                  topic: "Kardiológia"
+                  description: "Szívultrahangos alapvizsgálat"
+                  location: "204-es vizsgáló"
+                  date: "2026-05-20T10:00:00.000Z"
+                  price: "25000"
+                  patient_id: null
+                  created_by: "698a3e705cf74c640c1f4b1c"
+                - _id: "65c1234567890abc22222222"
+                  doctor_id: "698a3e705cf74c640c1f4b1c"
+                  topic: "Kisműtét"
+                  description: "Katéterezés"
+                  location: "Műtő 1"
+                  date: "2026-05-21T08:30:00.000Z"
+                  price: "1 lélek"
+                  patient_id: null
+                  created_by: "698a3e705cf74c640c1f4b1c"
+
+    post:
+      summary: Új szolgáltatás létrehozása
+      description: Orvos csak saját nevében, Admin bárki nevében hozhat létre új bejegyzést.
+      tags: [Services]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceCreateRequest'
+            example:
+              doctor_id: "698a3e705cf74c640c1f4b1c"
+              topic: "Kardiológia"
+              description: "Rövid, 30 perces beavatkozás"
+              location: "102-es vizsgáló"
+              date: "2026-05-20T10:00:00.000Z"
+              price: "1 lélek"
+      responses:
+        201:
+          description: Szolgáltatás sikeresen létrehozva
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceResponse'
+        400:
+          description: Validációs hiba (hiányzó vagy rossz típusú mezők)
+        403:
+          description: Nincs jogosultságod más orvos nevében rögzíteni
+
+
+
+components:
+  schemas:
+    ServiceCreateRequest:
+      type: object
+      required: [doctor_id, topic, description, location, date, price]
+      properties:
+        doctor_id:
+          type: string
+          description: Az orvos MongoDB ID-ja
+        topic:
+          type: string
+          description: A szolgáltatás témája
+        description:
+          type: string
+        location:
+          type: string
+        date:
+          type: string
+          format: date-time
+        price:
+          type: string
+          description: Az ár, ami lehet szám vagy szöveg is
+        patient_id:
+          type: string
+          nullable: true
+
+    ServiceResponse:
+      type: object
+      properties:
+        _id:
+          type: string
+        doctor_id:
+          type: string
+        topic:
+          type: string
+        description:
+          type: string
+        location:
+          type: string
+        date:
+          type: string
+          format: date-time
+        price:
+          type: string
+        patient_id:
+          type: string
+          nullable: true
+        created_by:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        error:
+          type: string
