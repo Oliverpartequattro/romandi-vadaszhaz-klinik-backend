@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema(
       required: [true, "Telefonszám megadása kötelező"],
       match: [/^(?:\+36|06)(?:20|30|31|70)\d{7}$/, "Érvénytelen magyar telefonszám formátum"]
     },
+    birthDate: { 
+      type: Date, 
+      required: [true, "Születési dátum megadása kötelező"],
+    },
     role: { 
       type: String, 
       enum: ["ADMIN", "DOCTOR", "PATIENT"], 
