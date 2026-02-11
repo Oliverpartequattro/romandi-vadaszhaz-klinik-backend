@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
@@ -20,13 +20,13 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Doktor János",
-    "email": "doktorjani@gmail.com",
-    "password": "pwd",
+    "name": "Doktor János A Második",
+    "email": "doktorjani2@gmail.com",
+    "password": "doktorcigany2",
     "phone": "+36301234567",
-    "tajNumber": "666 666 789",
-    "address": "9022 Győr, Admin tér 1.",
-    "specialization": "Katéterezés",
+    "tajNumber": "666666666",
+    "address": "9022 Győr, Doktor tér 2.",
+    "specialization": "Végbéltükrözés",
     "role": "DOCTOR"
 }
 

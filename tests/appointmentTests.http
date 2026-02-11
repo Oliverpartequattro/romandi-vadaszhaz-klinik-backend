@@ -31,8 +31,76 @@ Content-Type: application/json
     "email": "doktorjani@gmail.com",
     "password": "pwd"
 }
+### 0. Orvos2 login
+# @name doctorLogin2
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "doktorjani2@gmail.com",
+    "password": "doktorcigany2"
+}
 
 ### 1.1 Összes időpont lekérése ADMIN ONLY
 GET {{baseUrl}}/appointments
 Authorization: Bearer {{adminLogin.response.body.token}}
 Content-Type: application/json
+
+### ---------------------------------------------------------
+### IDŐPONTFOGLALÁSI FOLYAMAT TESZTELÉSE
+### ---------------------------------------------------------
+
+### 1.2 Páciens időpontot igényel (PENDING)
+# @name createAppointment
+POST {{baseUrl}}/appointments
+Authorization: Bearer {{patientLogin.response.body.token}}
+Content-Type: application/json
+
+{
+    "doctor_id": "698a3e705cf74c640c1f4b1c",                                                                                                 
+    "service_id": "IDE_MÁSOLD_A_SZOLGALTATAS_ID_T",
+    "startTime": "2026-05-20T10:00:00.000Z",
+    "endTime": "2026-05-20T10:30:00.000Z"
+}
+
+@appointmentId = {{createAppointment.response.body._id}}
+
+### 1.3 Orvos válaszol: ELFOGADJA (CONFIRMED)
+PUT {{baseUrl}}/appointments/{{appointmentId}}
+Authorization: Bearer {{doctorLogin.response.body.token}}
+Content-Type: application/json
+
+{
+    "status": "CONFIRMED"
+}
+
+### 1.4 Orvos válaszol: ÚJ IDŐPONTOT JAVASOL (PROPOSED)
+# Itt leteszteljük, hogy ha az időt módosítja, átvált-e PROPOSED-re
+PUT {{baseUrl}}/appointments/{{appointmentId}}
+Authorization: Bearer {{doctorLogin.response.body.token}}
+Content-Type: application/json
+
+{
+    "startTime": "2026-05-20T11:00:00.000Z",
+    "endTime": "2026-05-20T11:30:00.000Z"
+}
+
+### 1.5 Rossz Orvos próbál belenyúlni (FORBIDDEN - 403-at kell adnia)
+# Tegyük fel, hogy egy másik orvos próbálja módosítani
+PUT {{baseUrl}}/appointments/{{appointmentId}}
+Authorization: Bearer {{doctorLogin2.response.body.token}}
+Content-Type: application/json
+
+{
+    "status": "REJECTED"
+}
+
+### 1.6 Páciens véglegesíti az orvos ajánlatát (CONFIRMED)
+# Ezt akkor hívja a frontend, ha a páciens rányom az "Elfogadom az új időpontot" gombra
+PUT {{baseUrl}}/appointments/{{appointmentId}}
+Authorization: Bearer {{patientLogin.response.body.token}}
+Content-Type: application/json
+
+{
+    "status": "CONFIRMED"
+}
