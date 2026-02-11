@@ -95,6 +95,7 @@ paths:
           description: Sikeres frissítés
         403:
           description: Nincs jogosultság a módosításhoz vagy tiltott státuszátmenet
+          
   /api/appointments/my:
     get:
       summary: Saját időpontok lekérése
