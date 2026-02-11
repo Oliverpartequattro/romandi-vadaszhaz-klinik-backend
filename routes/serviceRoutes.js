@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
 // @route   POST /api/services
 router.post('/', protect, async (req, res) => {
     try {
-        const { name, description, duration, price, doctor_id } = req.body;
+        const { topic, description, location, date, price, patient_id, doctor_id } = req.body;
 
         // JOGOSULTSÁG ELLENŐRZÉS
         // Ha nem admin, és az orvos nem a saját ID-ját küldi be
@@ -28,10 +28,13 @@ router.post('/', protect, async (req, res) => {
         }
 
         const newService = new Service({
-            name,
+            topic,
             description,
-            duration,
+            location,
             price,
+            date,
+            patient_id,
+            created_by: req.user._id,
             doctor_id: req.user.role === 'ADMIN' ? doctor_id : req.user._id
         });
 

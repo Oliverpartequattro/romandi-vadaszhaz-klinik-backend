@@ -24,7 +24,7 @@ const serviceSchema = new mongoose.Schema(
       required: [true, "Kezdő időpont kötelező"],
     },
     price: {
-      type: Number || String,
+      type: String,
       required: [true, "Ár megadása kötelező"],
     },
     patient_id: {

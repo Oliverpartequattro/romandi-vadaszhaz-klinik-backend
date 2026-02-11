@@ -19,6 +19,15 @@ Content-Type: application/json
 POST {{baseUrl}}/users/register
 Content-Type: application/json
 
+{
+    "name": "Páciens János",
+    "email": "szemethylevente@gmail.com",
+    "password": "doktorcigany2",
+    "phone": "+36709998877",
+    "address": "9022 Győr, Jáki tér 1.",
+    "tajNumber": "123456789"
+
+}
  
 
 ### 3. Bejelentkezés
@@ -34,8 +43,8 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "janos@gmail.com",
-    "password": "titkosjelszo123"
+    "email": "szemethylevente@gmail.com",
+    "password": "doktorcigany2"
 }
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
@@ -43,13 +52,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmN
 
 ### 5. Profil frissítése (Név és telefonszám módosítása)
 PUT {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDY2Nzc3MSwiZXhwIjoxNzczMjU5NzcxfQ.14GEamK8aUT1Qcl-8971DKlMmEEKYuvh91eXatLiRpM
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGM1Y2UzYzViYWE3YmNkNmE5ZDQ0MyIsImlhdCI6MTc3MDgwNjQ5OSwiZXhwIjoxNzczMzk4NDk5fQ.QVNJsBSEo_knWfd0aYE93MieRw44Jcvu0BslmBkJ0pE
 Content-Type: application/json
 
 {
-    "name": "Páciens János",
+    "name": "Páciens Levente Szemethy",
     "phone": "+36709998877",
-    "address": "9022 Győr, Páciens tér 1."
+    "address": "9022 Győr, Szemethy tér 1."
 }
 
 ###6. Kijelentkezés (Token törlése a kliens oldalon, itt csak szimbolikus)
