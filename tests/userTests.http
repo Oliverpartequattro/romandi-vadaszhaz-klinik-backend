@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
