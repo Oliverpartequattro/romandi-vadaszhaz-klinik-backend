@@ -166,22 +166,19 @@ router.get("/profile", protect, async (req, res) => {
 // @route   PUT /api/users/profile
 router.put('/profile', protect, async (req, res) => {
     try {
-        console.log(req.body);
         const user = await User.findById(req.user._id);
 
         if (user) {
-          console.log(user);
-          
-            // Csak azokat a mezőket frissítjük, amik jönnek a kérésben, 
-            // különben megtartjuk a régit
+            // 1. Egyszerű mezők frissítése
             user.name = req.body.name || user.name;
             user.email = req.body.email || user.email;
             user.phone = req.body.phone || user.phone;
             user.address = req.body.address || user.address;
             user.tajNumber = req.body.tajNumber || user.tajNumber;
 
-            // Ha új jelszó érkezik, beállítjuk (a User.js pre-save hookja hashelni fogja!)
-            if (req.body.password) {
+            // 2. JELSZÓ LOGIKA: Csak akkor írjuk felül, ha TÉNYLEG küldtek újat
+            // és az nem csak egy üres szóköz/string.
+            if (req.body.password && req.body.password.trim() !== "") {
                 user.password = req.body.password;
             }
 
@@ -197,12 +194,20 @@ router.put('/profile', protect, async (req, res) => {
                 address: updatedUser.address,
                 tajNumber: updatedUser.tajNumber,
                 role: updatedUser.role,
-                token: generateToken(updatedUser._id), // Új tokent adunk vissza
+                token: generateToken(updatedUser._id),
             });
         } else {
             res.status(404).json({ message: 'Felhasználó nem található' });
         }
     } catch (error) {
+        // 3. OKOSABB HIBAKEZELÉS: Ha validációs hiba van, ne 500-at adjunk
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({ 
+                message: 'Validációs hiba', 
+                error: Object.values(error.errors).map(err => err.message).join(', ') 
+            });
+        }
+        
         console.error('Hiba a profil frissítésekor:', error.message);
         res.status(500).json({ message: 'Szerver hiba a frissítés során', error: error.message });
     }
