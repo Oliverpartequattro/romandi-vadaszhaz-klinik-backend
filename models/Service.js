@@ -1,33 +1,44 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const serviceSchema = new mongoose.Schema({
-    doctor_id: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
-        required: true 
+const serviceSchema = new mongoose.Schema(
+  {
+    doctor_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    topic: { 
-        type: String, 
-        required: [true, "Téma megadása kötelező (pl. Kardiológia)"] 
+    topic: {
+      type: String,
+      required: [true, "Téma megadása kötelező (pl. Kardiológia)"],
     },
-    location: { 
-        type: String, 
-        required: [true, "Helyszín megadása kötelező (pl. 102-es vizsgáló)"] 
+    description: {
+      type: String,
+      required: [true, "Leírás megadása kötelező"],
     },
-    date: { 
-        type: Date, 
-        required: [true, "Kezdő időpont kötelező"] 
+    location: {
+      type: String,
+      required: [true, "Helyszín megadása kötelező (pl. 102-es vizsgáló)"],
     },
-    patient_id: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User', 
-        default: null 
+    date: {
+      type: Date,
+      required: [true, "Kezdő időpont kötelező"],
     },
-    created_by: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'User' 
-    }
-}, { timestamps: true });
+    price: {
+      type: Number || String,
+      required: [true, "Ár megadása kötelező"],
+    },
+    patient_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    created_by: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+  },
+  { timestamps: true },
+);
 
-const Service = mongoose.model('Service', serviceSchema);
+const Service = mongoose.model("Service", serviceSchema);
 export default Service;

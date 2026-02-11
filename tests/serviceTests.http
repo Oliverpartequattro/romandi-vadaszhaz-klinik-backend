@@ -45,20 +45,24 @@ Content-Type: application/json
 GET {{baseUrl}}/services
 Content-Type: application/json
 
-### 1.1 Új szolgáltatás létrehozása - ORVOS (Saját magának)
+### 1.1 Új szolgáltatás létrehozása - Minden elvárt mezővel
 # @name createService
 POST {{baseUrl}}/services
 Authorization: Bearer {{doctorLogin.response.body.token}}
 Content-Type: application/json
 
 {
-    "name": "Kardiológiai kisműtét",
-    "topic": "cardiology",
-    "description": "Rövid, 30 perces beavatkozás",
-    "duration": 30,
-    "price": 25000,
     "doctor_id": "698a3e705cf74c640c1f4b1c",
+    "topic": "Kardiológia",
+    "description": "Rövid, 30 perces beavatkozás",
+    "location": "102-es vizsgáló",
+    "date": "2026-05-20T10:00:00.000Z",
+    "price": "1 lélek"
 }
+
+### 1.2 Szolgáltatások (szabad időpontok) lekérése
+GET {{baseUrl}}/services
+Content-Type: application/json
 
 ### 1.2 Új szolgáltatás létrehozása - ADMIN (Bármelyik orvoshoz)
 POST {{baseUrl}}/services
