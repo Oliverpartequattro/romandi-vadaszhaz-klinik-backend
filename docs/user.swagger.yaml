@@ -236,6 +236,7 @@ components:
         specialization: { type: string, example: "Nincs (Páciens)" }
         tajNumber: { type: string, example: "123 456 789" }
         address: { type: string, example: "9022 Győr, Fő tér 1." }
+        birthDate: { type: string, example: "1990-01-01" }
         token: { type: string, example: "eyJhbGciOiJIUzI1Ni..." }
     
     UserRegister:
@@ -250,6 +251,7 @@ components:
         specialization: { type: string, example: "" }
         tajNumber: { type: string, example: "987 654 321" }
         address: { type: string, example: "1051 Budapest, Petőfi u. 10." }
+        birthDate: { type: string, example: "1990-01-01" }
 
     UserUpdate:
       type: object
