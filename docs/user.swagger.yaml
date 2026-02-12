@@ -265,6 +265,7 @@ components:
         password: { type: string }
         phone: { type: string }
         address: { type: string }
+        birthDate: { type: date, example: "1990-01-01" }
         tajNumber: { type: string }
 
     RecordPopulated:
