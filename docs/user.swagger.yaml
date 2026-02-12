@@ -57,15 +57,40 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserRegister'
+            example:
+              name: "Kovács Béla"
+              email: "kovacs.bela@example.hu"
+              password: "Password123"
+              phone: "+36301234567"
+              birthDate: "1990-05-15"
+              role: "PATIENT"
+              tajNumber: "123456789"
+              address: "1051 Budapest, Erzsébet tér 1."
+              specialization: ""
       responses:
         201:
           description: Felhasználó létrehozva
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+              example:
+                _id: "65c123abc456def789012345"
+                name: "Kovács Béla"
+                email: "kovacs.bela@example.hu"
+                phone: "+36301234567"
+                role: "PATIENT"
+                tajNumber: "123456789"
+                address: "1051 Budapest, Erzsébet tér 1."
+                token: "eyJhbGciOiJIUzI1Ni..."
         400:
-          description: Már létező email vagy hiányzó adatok
+          description: Már létező email vagy hiányzó/hibás adatok (pl. rossz TAJ vagy jelszó formátum)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+              example:
+                message: "A jelszónak legalább 8 karakterből kell állnia, és tartalmaznia kell betűt és számot is"
 
   /api/users/login:
     post:
