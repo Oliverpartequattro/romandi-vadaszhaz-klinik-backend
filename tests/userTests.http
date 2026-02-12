@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
@@ -20,14 +20,14 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Páciens János",
-    "email": "szemethylevente2@gmail.com",
+    "name": "Szemethy János",
+    "email": "szemethylevente3@gmail.com",
     "password": "doktorcigany2",
     "phone": "+36709998877",
     "address": "9022 Győr, Jáki tér 1.",
-    "tajNumber": "123456789",
-    "birthDate": "1990-01-01"
-
+    "specialization": "Kardiológia",
+    "birthDate": "1990-01-01",
+    "role": "DOCTOR"
 }
  
 

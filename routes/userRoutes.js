@@ -82,6 +82,7 @@ router.post("/register", async (req, res) => {
         phone: user.phone,
         tajNumber: user.tajNumber,
         address: user.address,
+        birthDate: user.birthDate,
         role: user.role,
         token: generateToken(user._id),
       });
@@ -113,6 +114,7 @@ router.post("/login", async (req, res) => {
         phone: user.phone,
         tajNumber: user.tajNumber,
         address: user.address,
+        birthDate: user.birthDate,
         specialization: user.specialization,
         role: user.role,
         token: generateToken(user._id),
