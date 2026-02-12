@@ -66,6 +66,7 @@ paths:
               role: "PATIENT"
               tajNumber: "123456789"
               address: "1051 Budapest, Erzsébet tér 1."
+              birthDate: "1990-01-01"
               specialization: ""
       responses:
         201:
@@ -82,6 +83,7 @@ paths:
                 role: "PATIENT"
                 tajNumber: "123456789"
                 address: "1051 Budapest, Erzsébet tér 1."
+                birthDate: "1990-01-01"
                 token: "eyJhbGciOiJIUzI1Ni..."
         400:
           description: Már létező email vagy hiányzó/hibás adatok (pl. rossz TAJ vagy jelszó formátum)
