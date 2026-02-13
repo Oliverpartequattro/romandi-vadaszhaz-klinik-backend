@@ -75,7 +75,7 @@ router.get('/my', protect, async (req, res) => {
         const myRecords = await Record.find(filter)
             .populate('patient', 'name email tajNumber')
             .populate('doctor', 'name specialization')
-            .populate('service', 'topic location')
+            .populate('service_id', 'topic location')
             .sort({ createdAt: -1 }); // A legfrissebb lelet legfelül
 
         res.json(myRecords);
