@@ -42,13 +42,9 @@ GET {{baseUrl}}/records/patient/698ed3805990de5da799ea52
 Authorization: Bearer {{doctorLogin.response.body.token}}
 Content-Type: application/json
 
-### 1.3. SAJÁT IDŐPONTOK (Orvos látja a pácienseit)
-GET {{baseUrl}}/appointments/my
-Authorization: Bearer {{doctorLogin.response.body.token}}
-
 ### 1.4. SAJÁT KÓRTÖRTÉNET LEKÉRÉSE (Páciens a saját leleteit látja)
 GET {{baseUrl}}/records/my
-Authorization: Bearer {{patientLogin.response.body.token}}
+Authorization: Bearer {{doctorLogin.response.body.token}}
 
 ### 2. Új rekord létrehozása (ORVOSKÉNT)
 POST {{baseUrl}}/records
