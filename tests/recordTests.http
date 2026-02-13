@@ -18,8 +18,8 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "janos@gmail.com",
-    "password": "titkosjelszo123"
+    "email": "szemethylevente2@gmail.com",
+    "password": "doktorcigany2"
 }
 
 ### 0. Orvos login
@@ -28,8 +28,8 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "doktorjani@gmail.com",
-    "password": "pwd"
+    "email": "szemethylevente3@gmail.com",
+    "password": "doktorcigany2"
 }
 
 ### 1.1 Összes rekord lekérése ADMIN ONLY
@@ -38,9 +38,17 @@ Authorization: Bearer {{adminLogin.response.body.token}}
 Content-Type: application/json
 
 ### 1.2 Páciens kórtörténetének lekérése (ID alapján)
-GET {{baseUrl}}/records/patient/6989c26f47278217e6676824
+GET {{baseUrl}}/records/patient/698ed3805990de5da799ea52
 Authorization: Bearer {{doctorLogin.response.body.token}}
 Content-Type: application/json
+
+### 1.3. SAJÁT IDŐPONTOK (Orvos látja a pácienseit)
+GET {{baseUrl}}/appointments/my
+Authorization: Bearer {{doctorLogin.response.body.token}}
+
+### 1.4. SAJÁT KÓRTÖRTÉNET LEKÉRÉSE (Páciens a saját leleteit látja)
+GET {{baseUrl}}/records/my
+Authorization: Bearer {{patientLogin.response.body.token}}
 
 ### 2. Új rekord létrehozása (ORVOSKÉNT)
 POST {{baseUrl}}/records
@@ -48,7 +56,9 @@ Authorization: Bearer {{doctorLogin.response.body.token}}
 Content-Type: application/json
 
 {
-    "patient": "6989c26f47278217e6676824",
-    "description": "A páciens újra erős fejfájásra panaszkodott. Vérnyomás rendben, pihenést javasoltam.",
-    "service_id": "65c1234567890123456789ab"
+    "patient": "698ed3805990de5da799ea52",
+    "description": "Végbélrák gyanúja, további vizsgálatok szükségesek.",
+    "service_id": "698edacaeb2bfa2473c91159"
 }
+
+

@@ -28,8 +28,8 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "doktorjani@gmail.com",
-    "password": "pwd"
+    "email": "szemethylevente3@gmail.com",
+    "password": "doktorcigany2"
 }
 ### 0. Orvos2 login
 # @name doctorLogin2
@@ -52,8 +52,8 @@ Authorization: Bearer {{doctorLogin.response.body.token}}
 Content-Type: application/json
 
 {
-    "doctor_id": "698a3e705cf74c640c1f4b1c",
-    "topic": "Kardiológia",
+    "doctor_id": "698d8b0aa5a17b8f0f27b19f",
+    "topic": "Végbéltükrözés",
     "description": "Rövid, 30 perces beavatkozás",
     "location": "102-es vizsgáló",
     "date": "2026-05-20T10:00:00.000Z",
