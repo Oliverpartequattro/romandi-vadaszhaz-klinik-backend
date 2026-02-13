@@ -59,7 +59,7 @@ Content-Type: application/json
 {
     "doctor_id": "698ee61f8436052991825b1f", 
     "service_id": "698ee8188436052991825b36",
-    "startTime": "2026-05-20T10:00:00.000Z",
+    "startTime": "2026-05-20T10:00:00",
     "referral_type": "SELF"
 }
 

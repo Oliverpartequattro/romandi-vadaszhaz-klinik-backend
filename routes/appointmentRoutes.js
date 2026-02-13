@@ -46,18 +46,18 @@ router.post('/', protect, async (req, res) => {
         });
 
         const savedAppointment = await newAppointment.save();
+        // Visszaküldés előtt populáljuk, hogy a frontend látványos választ kapjon
+        const populatedAppointment = await Appointment.findById(savedAppointment._id)
+        .populate('doctor_id', 'name specialization')
+        .populate('service_id', 'topic location price');
         sendBookEmail(
             req.user.email, 
             req.user.name,
-            savedAppointment.startTime,
-            savedAppointment.service_id,
-            savedAppointment.doctor_id
+            populatedAppointment.startTime,
+            populatedAppointment.service_id.topic,
+            populatedAppointment.doctor_id.name
         )
-        // Visszaküldés előtt populáljuk, hogy a frontend látványos választ kapjon
-        const populatedAppointment = await Appointment.findById(savedAppointment._id)
-            .populate('doctor_id', 'name specialization')
-            .populate('service_id', 'topic location price');
-
+        
         res.status(201).json(populatedAppointment);
     } catch (error) {
         res.status(400).json({ message: 'Hiba a foglalás létrehozásakor', error: error.message });
