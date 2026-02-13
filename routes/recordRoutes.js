@@ -75,7 +75,7 @@ router.get('/my', protect, async (req, res) => {
         const myRecords = await Record.find(filter)
             .populate('patient', 'name email tajNumber')
             .populate('doctor', 'name specialization')
-            .populate('service_id', 'topic location')
+            .populate('service', 'topic location')
             .sort({ createdAt: -1 }); // A legfrissebb lelet legfelül
 
         res.json(myRecords);
@@ -91,7 +91,7 @@ router.get('/my', protect, async (req, res) => {
 // @route   POST /api/records
 router.post('/', protect, doctorOrAdmin, async (req, res) => {
     try {
-        const { patient, appointment_id, service_id, description } = req.body;
+        const { patient, appointment_id, service, description } = req.body;
 
         // 1. Ellenőrizzük, hogy a páciens létezik-e
         const patientExists = await User.findById(patient);
@@ -104,7 +104,7 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
             patient,
             doctor: req.user._id, // Aki be van jelentkezve
             appointment_id,
-            service_id,
+            service,
             description
         });
 
