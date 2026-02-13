@@ -6,6 +6,7 @@ Webalapú klinik időpontfoglaló rendszer backendje. Ez a dokumentáció a fron
 
 * **API Base URL:** `https://romandi-vadaszhaz-klinik-backend.vercel.app`
 * **Interaktív Dokumentáció:** [/api-docs](https://romandi-vadaszhaz-klinik-backend.vercel.app/api-docs) (Swagger UI)
+* **Éles frontend url:** [Frontend](https://romandi-vadaszhaz-klinik-frontend-4.vercel.app)
 
 ---
 
