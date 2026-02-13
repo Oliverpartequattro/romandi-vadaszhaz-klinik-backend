@@ -18,7 +18,7 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "paciens@gmail.com",
+    "email": "oliverroncz@gmail.com",
     "password": "doktorcigany2"
 }
 
@@ -58,7 +58,7 @@ Content-Type: application/json
 
 {
     "doctor_id": "698ee61f8436052991825b1f", 
-    "service_id": "698ee8598436052991825b41",
+    "service_id": "698ee8188436052991825b36",
     "startTime": "2026-05-20T10:00:00.000Z",
     "referral_type": "SELF"
 }

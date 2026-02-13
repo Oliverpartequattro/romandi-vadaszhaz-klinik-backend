@@ -2,6 +2,7 @@
 import express from 'express';
 import Appointment from '../models/Appointment.js';
 import { protect, admin } from '../middleware/authMiddleware.js';
+import { sendBookEmail } from '../mail/mail.js';
 
 const router = express.Router();
 
@@ -45,7 +46,13 @@ router.post('/', protect, async (req, res) => {
         });
 
         const savedAppointment = await newAppointment.save();
-        
+        sendBookEmail(
+            req.user.email, 
+            req.user.name,
+            savedAppointment.startTime,
+            savedAppointment.service_id,
+            savedAppointment.doctor_id
+        )
         // Visszaküldés előtt populáljuk, hogy a frontend látványos választ kapjon
         const populatedAppointment = await Appointment.findById(savedAppointment._id)
             .populate('doctor_id', 'name specialization')

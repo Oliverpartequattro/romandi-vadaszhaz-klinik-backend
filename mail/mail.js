@@ -130,18 +130,20 @@ export const sendBookEmail = async (to, userName, date, service, doctor) => {
         to,
         subject: "Időpontfoglalás rögzítve - Romándi Vadászház Klinik",
         html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
                 <h2 style="color: #2ecc71; text-align: center;">Sikeres foglalás!</h2>
                 <hr>
                 <p>Kedves <strong>${userName}</strong>,</p>
-                <p>Rendszerünk rögzítette az új időpontfoglalásodat.</p>
-                <p><strong>Orvos:</strong> ${doctor || 'Hamarosan pontosítva'}</p>
-                <p><strong>Vizsgálat:</strong> ${service || 'Hamarosan pontosítva'}</p>
-                <p><strong>Időpont:</strong> ${date || 'Hamarosan pontosítva'}</p>
+                <p>Rendszerünk rögzítette az új időpontfoglalásodat az alábbi adatokkal:</p>
+                <div style="background-color: #f9f9f9; padding: 15px; border-radius: 5px; border-left: 5px solid #2ecc71;">
+                    <p><strong>Orvos:</strong> ${doctor || 'Hamarosan pontosítva'}</p>
+                    <p><strong>Vizsgálat:</strong> ${service || 'Hamarosan pontosítva'}</p>
+                    <p><strong>Időpont:</strong> ${date || 'Hamarosan pontosítva'}</p>
+                </div>
                 <p>Kérjük, érkezz 10 perccel a megadott időpont előtt.</p>
                 <br>
                 <div style="text-align: center;">
-                    <a href="https://romandi-vadaszhaz-klinik-frontend-4.vercel.app" style="background-color: #2ecc71; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Időpontjaim megtekintése</a>
+                    <a href="https://romandi-vadaszhaz-klinik-frontend-4.vercel.app" style="background-color: #2ecc71; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Időpontjaim kezelése</a>
                 </div>
             </div>
         `,
@@ -158,9 +160,9 @@ export const sendBookEmail = async (to, userName, date, service, doctor) => {
 };
 
 /**
- * 5. ORVOSI VÁLASZ / LELET ÉRTESÍTŐ
+ * 5. ORVOSI VÁLASZ ÉRTESÍTŐ
  */
-export const sendDoctorResponseEmail = async (to, userName) => {
+export const sendDoctorResponseEmail = async (to, userName, service, doctor) => {
     const transporter = getTransporter();
     if (!transporter) return false;
 
@@ -169,15 +171,19 @@ export const sendDoctorResponseEmail = async (to, userName) => {
         to,
         subject: "Új egészségügyi dokumentum érkezett - Romándi Vadászház Klinik",
         html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px;">
+            <div style="font-family: sans-serif; max-width: 600px; margin: auto; border: 1px solid #eee; padding: 20px; border-radius: 10px;">
                 <h2 style="color: #34495e; text-align: center;">Új lelet érkezett</h2>
                 <hr>
                 <p>Kedves <strong>${userName}</strong>,</p>
-                <p>Értesítünk, hogy az orvosod frissítette a kórtörténetedet vagy új leletet töltött fel a rendszerbe.</p>
-                <p>A dokumentumot bejelentkezés után a "Kórtörténet" menüpont alatt találod meg.</p>
+                <p>Értesítünk, hogy a korábbi vizsgálatod eredménye (lelete) elkészült és elérhető a rendszerben.</p>
+                <div style="background-color: #f4f7f6; padding: 15px; border-radius: 5px; border-left: 5px solid #34495e;">
+                    <p><strong>Vizsgálat:</strong> ${service || 'Orvosi konzultáció'}</p>
+                    <p><strong>Kezelőorvos:</strong> ${doctor || 'Klinikai szakorvos'}</p>
+                </div>
+                <p>A teljes dokumentációt bejelentkezés után a <strong>Kórtörténet</strong> menüpont alatt találod meg.</p>
                 <br>
                 <div style="text-align: center;">
-                    <a href="https://romandi-vadaszhaz-klinik-frontend-4.vercel.app" style="background-color: #34495e; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Leletek megtekintése</a>
+                    <a href="https://romandi-vadaszhaz-klinik-frontend-4.vercel.app" style="background-color: #34495e; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Lelet megnyitása</a>
                 </div>
             </div>
         `,
