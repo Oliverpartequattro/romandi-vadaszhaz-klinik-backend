@@ -98,8 +98,11 @@ paths:
           
   /api/appointments/my:
     get:
-      summary: Saját időpontok lekérése
-      description: A bejelentkezett felhasználó (Páciens vagy Orvos) saját listáját adja vissza.
+      summary: Bejelentkezett felhasználó saját időpontjainak lekérése
+      description: |
+        A token alapján azonosítja a felhasználót. 
+        - **Páciensnél**: A saját foglalásait adja vissza.
+        - **Orvosnál**: A hozzá beosztott pácienseket és időpontokat adja vissza.
       tags: [Appointments]
       security:
         - bearerAuth: []
@@ -111,7 +114,31 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AppointmentResponse"
+                  $ref: '#/components/schemas/AppointmentResponse'
+              # --- PÉLDA VÁLASZ ---
+              example:
+                - _id: "65c123abc456def789012345"
+                  status: "CONFIRMED"
+                  startTime: "2026-02-20T10:00:00.000Z"
+                  endTime: "2026-02-20T11:00:00.000Z"
+                  doctor_id:
+                    _id: "65b987def654abc321098765"
+                    name: "Dr. Kovács Antal"
+                    specialization: "Kardiológus"
+                    phone: "+36301112233"
+                  patient_id:
+                    _id: "65a456ghi789jkl012345678"
+                    name: "Minta János"
+                    email: "janos@gmail.com"
+                    phone: "+36704445566"
+                  service_id:
+                    topic: "Szívultrahang"
+                    location: "B épület, 2. emelet"
+                    price: 25000
+        401:
+          $ref: '#/components/responses/Unauthorized'
+        500:
+          description: Szerver hiba a lekérdezés során
 
 components:
   schemas:
