@@ -177,6 +177,7 @@ router.put('/profile', protect, async (req, res) => {
             user.phone = req.body.phone || user.phone;
             user.address = req.body.address || user.address;
             user.tajNumber = req.body.tajNumber || user.tajNumber;
+            user.birthDate = req.body.birthDate || user.birthDate;
 
             // 2. JELSZÓ LOGIKA: Csak akkor írjuk felül, ha TÉNYLEG küldtek újat
             // és az nem csak egy üres szóköz/string.
@@ -194,6 +195,7 @@ router.put('/profile', protect, async (req, res) => {
                 email: updatedUser.email,
                 phone: updatedUser.phone,
                 address: updatedUser.address,
+                birthDate: updatedUser.birthDate,
                 tajNumber: updatedUser.tajNumber,
                 role: updatedUser.role,
                 token: generateToken(updatedUser._id),

@@ -45,7 +45,7 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "kiaodij@gmail.com",
+    "email": "paciens@gmail.com",
     "password": "doktorcigany2"
 }
 ### 4. Profil lekérése
@@ -54,13 +54,14 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmN
 
 ### 5. Profil frissítése (Név és telefonszám módosítása)
 PUT {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGM1Y2UzYzViYWE3YmNkNmE5ZDQ0MyIsImlhdCI6MTc3MDgwNjQ5OSwiZXhwIjoxNzczMzk4NDk5fQ.QVNJsBSEo_knWfd0aYE93MieRw44Jcvu0BslmBkJ0pE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNjc4ODQzNjA1Mjk5MTgyNWIyNCIsImlhdCI6MTc3MDk4MTUxNywiZXhwIjoxNzczNTczNTE3fQ.cb6-Lr3WD8aE-oMe6HpE7HdO-TuafuWKy2_8wQdGkhU
 Content-Type: application/json
 
 {
     "name": "Páciens Levente Szemethy",
     "phone": "+36709998877",
-    "address": "9022 Győr, Szemethy tér 1."
+    "address": "9022 Győr, Szemethy tér 1.",
+    "birthDate": "1990-01-01"
 }
 
 ###6. Kijelentkezés (Token törlése a kliens oldalon, itt csak szimbolikus)
