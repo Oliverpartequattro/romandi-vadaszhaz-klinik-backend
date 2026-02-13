@@ -20,15 +20,15 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Páciens Roncz Levente",
-    "email": "oliverroncz@gmail.com",
+    "name": "Csöngető Csongot",
+    "email": "csongeto.csongor@students.jedlik.eu",
     "password": "doktorcigany2",
     "phone": "+36709998877",
-    "address": "9022 Győr, Páciens tér 1.",
+    "address": "9142, Rábapatona, Dózsa utca 56/B",
     "specialization": "Végbéltan",
     "birthDate": "1990-01-01",
     "tajNumber": "666666666",
-    "role": "PATIENT"
+    "role": "DOCTOR"
 }
  
 
@@ -45,28 +45,26 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "paciens@gmail.com",
+    "email": "pinter.balint@students.jedlik.eu",
     "password": "doktorcigany2"
 }
 ### 4. Profil lekérése
 GET {{baseUrl}}/users/profile
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDcxNzk5NSwiZXhwIjoxNzczMzA5OTk1fQ.ZXSpY_mIvvzw-eDjwke76xvNHw5oknhm0ynEALcqDjU
 
-### 5. Profil frissítése (Név és telefonszám módosítása)
+### 5. Profil frissítése
 PUT {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNjc4ODQzNjA1Mjk5MTgyNWIyNCIsImlhdCI6MTc3MDk4MTUxNywiZXhwIjoxNzczNTczNTE3fQ.cb6-Lr3WD8aE-oMe6HpE7HdO-TuafuWKy2_8wQdGkhU
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGY0MjQxZWE5Njc5ZDg3ODBjNjIzNSIsImlhdCI6MTc3MDk5NzcxMCwiZXhwIjoxNzczNTg5NzEwfQ.ByN-cp8wGQPAgob7x6BJMbaS9GumloIHOd0llU5ibaA
 Content-Type: application/json
 
 {
-    "name": "Páciens Levente Szemethy",
-    "phone": "+36709998877",
-    "address": "9022 Győr, Szemethy tér 1.",
-    "birthDate": "1990-01-01"
+    "name": "Pintér Bálint",
+    "address": "Csöves"
 }
 
 ###6. Kijelentkezés (Token törlése a kliens oldalon, itt csak szimbolikus)
 POST {{baseUrl}}/users/logout
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDY2Nzc3MSwiZXhwIjoxNzczMjU5NzcxfQ.14GEamK8aUT1Qcl-8971DKlMmEEKYuvh91eXatLiRpM
 ### 7. Felhasználó törlése ID alapján (Admin vagy Saját maga)
-DELETE {{baseUrl}}/users/698f409048578a32ff1bd4ed
+DELETE {{baseUrl}}/users/698f4331ea9679d8780c6241
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNWQxODQzNjA1Mjk5MTgyNWIxYyIsImlhdCI6MTc3MDk5NTU3MywiZXhwIjoxNzczNTg3NTczfQ.eouIIS11fw7N03qoW_0pnV9oylE4Wr8xx-SddYItpjQ

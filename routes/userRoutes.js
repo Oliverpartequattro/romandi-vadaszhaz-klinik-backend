@@ -3,7 +3,7 @@ import User from "../models/User.js"; // A .js kiterjesztés itt kötelező!
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
-import { sendWelcomeEmail } from '../mail/mail.js';
+import { sendWelcomeEmail, sendDeleteEmail, sendModifyEmail,} from '../mail/mail.js';
 
 const router = express.Router();
 // JWT token generálása
@@ -190,7 +190,7 @@ router.put('/profile', protect, async (req, res) => {
             const updatedUser = await user.save();
 
             console.log(`--- Profil frissítve: ${updatedUser.email} ---`);
-
+            sendModifyEmail(updatedUser.email, updatedUser.name);
             res.json({
                 _id: updatedUser._id,
                 name: updatedUser.name,
@@ -256,6 +256,7 @@ router.delete("/:id", protect, async (req, res) => {
 
         await User.findByIdAndDelete(userIdToDelete);
         console.log(`Sikeres törlés: ${user.email} eltávolítva.`);
+        sendDeleteEmail(user.email, user.name);
         res.json({ message: "Felhasználó sikeresen törölve" });
       } else {
         res.status(404).json({ message: "Felhasználó nem található" });
