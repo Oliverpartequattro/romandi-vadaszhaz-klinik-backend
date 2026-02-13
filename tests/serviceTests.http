@@ -9,7 +9,7 @@ Content-Type: application/json
 
 {
     "email": "admin@gmail.com",
-    "password": "pwd"
+    "password": "doktorcigany2"
 }
 
 ### 0. Paciens login
@@ -18,8 +18,8 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "janos@gmail.com",
-    "password": "titkosjelszo123"
+    "email": "paciens@gmail.com",
+    "password": "doktorcigany2"
 }
 
 ### 0. Orvos login
@@ -28,7 +28,7 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "szemethylevente3@gmail.com",
+    "email": "doktor@gmail.com",
     "password": "doktorcigany2"
 }
 ### 0. Orvos2 login
@@ -52,7 +52,7 @@ Authorization: Bearer {{doctorLogin.response.body.token}}
 Content-Type: application/json
 
 {
-    "doctor_id": "698d8b0aa5a17b8f0f27b19f",
+    "doctor_id": "698ee61f8436052991825b1f",
     "topic": "Végbéltükrözés",
     "description": "Rövid, 30 perces beavatkozás",
     "location": "102-es vizsgáló",

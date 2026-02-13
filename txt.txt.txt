@@ -9,3 +9,77 @@ doktorcigany2
 PÁCIENS:
 paciens@gmail.com
 doktorcigany2
+
+[
+  {
+    "_id": "698ee5d18436052991825b1c",
+    "name": "Admin Szemethy Levente",
+    "email": "admin@gmail.com",
+    "password": "$2b$10$idaPbRziaERcoPNM/gd2X.tTT.eyNCChe96Punw2je7oLWcSVQ.je",
+    "phone": "+36709998877",
+    "birthDate": "1990-01-01T00:00:00.000Z",
+    "role": "ADMIN",
+    "address": "9022 Győr, Admin tér 1.",
+    "records": [],
+    "specialization": "Kardiológia",
+    "createdAt": "2026-02-13T08:50:25.719Z",
+    "updatedAt": "2026-02-13T08:50:25.719Z",
+    "__v": 0
+  },
+  {
+    "_id": "698ee61f8436052991825b1f",
+    "name": "Dr.Doktor Szemethy Levente",
+    "email": "doktor@gmail.com",
+    "password": "$2b$10$WiH3FD3EdAAn.iKLkTUS8OELW3KXBLryWKyo1vUdD1rl9NtegVITm",
+    "phone": "+36709998877",
+    "birthDate": "1990-01-01T00:00:00.000Z",
+    "role": "DOCTOR",
+    "address": "9022 Győr, Doktor tér 1.",
+    "records": [],
+    "specialization": "Végbéltan",
+    "createdAt": "2026-02-13T08:51:43.313Z",
+    "updatedAt": "2026-02-13T08:51:43.313Z",
+    "__v": 0
+  },
+  {
+    "_id": "698ee6788436052991825b24",
+    "name": "Páciens Szemethy Levente",
+    "email": "paciens@gmail.com",
+    "password": "$2b$10$ecOxSAC8pnLQO/T77yNpfOIuRl9AOPT12G1kY3Ol6Rm4s076ZnmXG",
+    "phone": "+36709998877",
+    "birthDate": "1990-01-01T00:00:00.000Z",
+    "role": "PATIENT",
+    "tajNumber": "666666666",
+    "address": "9022 Győr, Páciens tér 1.",
+    "records": [],
+    "specialization": "Végbéltan",
+    "createdAt": "2026-02-13T08:53:12.862Z",
+    "updatedAt": "2026-02-13T08:53:12.862Z",
+    "__v": 0
+  }
+]
+
+{
+  "doctor_id": "698ee61f8436052991825b1f",
+  "topic": "Végbéltükrözés",
+  "description": "Rövid, 30 perces beavatkozás",
+  "location": "102-es vizsgáló",
+  "date": "2026-05-20T10:00:00.000Z",
+  "price": "1 lélek",
+  "patient_id": null,
+  "created_by": "698ee61f8436052991825b1f",
+  "_id": "698ee8188436052991825b36",
+  "createdAt": "2026-02-13T09:00:08.821Z",
+  "updatedAt": "2026-02-13T09:00:08.821Z",
+  "__v": 0
+}
+
+{
+  "patient": "698ee6788436052991825b24",
+  "doctor": "698ee61f8436052991825b1f",
+  "description": "Végbélrák gyanúja, további vizsgálatok szükségesek.",
+  "_id": "698ee8598436052991825b41",
+  "createdAt": "2026-02-13T09:01:13.812Z",
+  "updatedAt": "2026-02-13T09:01:13.812Z",
+  "__v": 0
+}

@@ -4,7 +4,7 @@
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljZTIxZWQ4OTgzMzBjOTQ2ZjU3YiIsImlhdCI6MTc3MDY2OTEwMCwiZXhwIjoxNzczMjYxMTAwfQ.gSPBXgN0mvKMY1JNfiPMqXXEmdkTF-VP3yVqzC97cmA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNWQxODQzNjA1Mjk5MTgyNWIxYyIsImlhdCI6MTc3MDk3Mjg0NywiZXhwIjoxNzczNTY0ODQ3fQ.jkGye_KOwrTBc-N5srVy8L0nXx5nfcGOLyZChKaoOkY
 Content-Type: application/json
 ### 1.2 Összes orvos lekérése
 GET {{baseUrl}}/users/doctors
@@ -38,7 +38,7 @@ Content-Type: application/json
 
 {
     "email": "admin@gmail.com",
-    "password": "pwd"
+    "password": "doktorcigany2"
 }
 ###
 POST {{baseUrl}}/users/login
