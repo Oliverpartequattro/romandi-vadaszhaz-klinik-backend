@@ -20,8 +20,8 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Páciens Szemethy Levente",
-    "email": "paciens@gmail.com",
+    "name": "Páciens Roncz Levente",
+    "email": "oliverroncz@gmail.com",
     "password": "doktorcigany2",
     "phone": "+36709998877",
     "address": "9022 Győr, Páciens tér 1.",
@@ -68,5 +68,5 @@ Content-Type: application/json
 POST {{baseUrl}}/users/logout
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDY2Nzc3MSwiZXhwIjoxNzczMjU5NzcxfQ.14GEamK8aUT1Qcl-8971DKlMmEEKYuvh91eXatLiRpM
 ### 7. Felhasználó törlése ID alapján (Admin vagy Saját maga)
-DELETE {{baseUrl}}/users/6989ce21ed898330c946f57b
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmNDcyNzgyMTdlNjY3NjgyNCIsImlhdCI6MTc3MDYzOTA3OSwiZXhwIjoxNzczMjMxMDc5fQ.E_CsdK6wY2TZlDH8ezkJsbNvhPJQI8h4tL8xEo4aum4
+DELETE {{baseUrl}}/users/698f409048578a32ff1bd4ed
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNWQxODQzNjA1Mjk5MTgyNWIxYyIsImlhdCI6MTc3MDk5NTU3MywiZXhwIjoxNzczNTg3NTczfQ.eouIIS11fw7N03qoW_0pnV9oylE4Wr8xx-SddYItpjQ

@@ -3,6 +3,7 @@ import User from "../models/User.js"; // A .js kiterjesztés itt kötelező!
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
+import { sendWelcomeEmail } from '../mail/mail.js';
 
 const router = express.Router();
 // JWT token generálása
@@ -75,6 +76,7 @@ router.post("/register", async (req, res) => {
 
     if (user) {
       console.log(`Sikeres regisztráció! Új user ID: ${user._id}`);
+      sendWelcomeEmail(user.email, user.name);
       res.status(201).json({
         _id: user._id,
         name: user.name,
