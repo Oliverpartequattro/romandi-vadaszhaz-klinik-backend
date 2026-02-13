@@ -43,7 +43,7 @@ export const sendWelcomeEmail = async (to, userName) => {
 
     try {
         const info = await transporter.sendMail(mailOptions);
-        console.log("✅ Üdvözlő email elküldve:", info.messageId);
+        console.log("✅ Üdvözlő email elküldve:");
         return true;
     } catch (error) {
         console.error("❌ Hiba:", error.message);

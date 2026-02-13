@@ -20,15 +20,15 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Csöngető Csongot",
-    "email": "csongeto.csongor@students.jedlik.eu",
+    "name": "Kapocsi Hunor László",
+    "email": "kapocsi.hunor.laszlo@students.jedlik.eu",
     "password": "doktorcigany2",
     "phone": "+36709998877",
-    "address": "9142, Rábapatona, Dózsa utca 56/B",
+    "address": "9024, Győr, Nádor utca 11",
     "specialization": "Végbéltan",
     "birthDate": "1990-01-01",
     "tajNumber": "666666666",
-    "role": "DOCTOR"
+    "role": "PATIENT"
 }
  
 
