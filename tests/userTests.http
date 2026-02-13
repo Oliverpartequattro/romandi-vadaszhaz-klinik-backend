@@ -20,14 +20,15 @@ POST {{baseUrl}}/users/register
 Content-Type: application/json
 
 {
-    "name": "Szemethy János",
-    "email": "szemethylevente3@gmail.com",
+    "name": "Páciens Szemethy Levente",
+    "email": "paciens@gmail.com",
     "password": "doktorcigany2",
     "phone": "+36709998877",
-    "address": "9022 Győr, Jáki tér 1.",
-    "specialization": "Kardiológia",
+    "address": "9022 Győr, Páciens tér 1.",
+    "specialization": "Végbéltan",
     "birthDate": "1990-01-01",
-    "role": "DOCTOR"
+    "tajNumber": "666666666",
+    "role": "PATIENT"
 }
  
 

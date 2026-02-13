@@ -1,0 +1,11 @@
+ADMIN:
+admin@gmail.com
+doktorcigany2
+
+DOKTOR:
+doktor@gmail.com
+doktorcigany2
+
+PÁCIENS:
+paciens@gmail.com
+doktorcigany2
