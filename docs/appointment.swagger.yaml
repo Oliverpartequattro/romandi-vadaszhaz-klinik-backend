@@ -1,28 +1,31 @@
 paths:
   /api/appointments:
     get:
-      summary: Összes időpont lekérése (Admin Only)
-      description: Lekéri az összes foglalást az adatbázisból, orvosi és páciens adatokkal populálva.
+      summary: Összes időpont lekérése (Csak Admin)
+      description: Lekéri az összes foglalást az adatbázisból, minden kapcsolódó adattal populálva.
       tags: [Appointments]
       security:
         - bearerAuth: []
       responses:
         200:
-          description: Sikeres lekérdezés
+          description: Sikeres lekérdezés.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/AppointmentResponse"
+                  $ref: "#/components/schemas/AppointmentFullResponse"
         401:
-          description: Nem azonosított felhasználó
+          $ref: '#/components/responses/Unauthorized'
         403:
-          description: Nincs Admin jogosultság
+          $ref: '#/components/responses/Forbidden'
 
     post:
       summary: Új időpont igénylése
-      description: Páciens saját magának, vagy Orvos beutalóként hozhat létre PENDING státuszú foglalást.
+      description: |
+        Páciens és Orvos is hívhatja. 
+        - **Páciensnél**: `patient_id` automatikusan a bejelentkezett felhasználó, `referral_type` alapértelmezetten 'SELF'.
+        - **Orvosnál**: Az orvos válik a `referred_by` személlyé, és a kérésben küldött `patient_id` lesz rögzítve.
       tags: [Appointments]
       security:
         - bearerAuth: []
@@ -31,41 +34,41 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [doctor_id, service_id, startTime]
-              properties:
-                doctor_id:
-                  type: string
-                  example: "65c123abc..."
-                service_id:
-                  type: string
-                  example: "65c456def..."
-                startTime:
-                  type: string
-                  format: date-time
-                endTime:
-                  type: string
-                  format: date-time
-                  nullable: true
-                referral_type:
-                  type: string
-                  enum: [SELF, DOCTOR]
-                referred_by:
-                  type: string
-                  description: Beutaló orvos ID-ja (ha van)
+              $ref: '#/components/schemas/AppointmentCreate'
       responses:
         201:
-          description: Foglalás sikeresen létrehozva (PENDING)
+          description: Időpont sikeresen rögzítve (Alapértelmezett státusz PENDING).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppointmentFullResponse'
         400:
-          description: Validációs hiba
+          description: Validációs hiba (pl. múltbeli időpont vagy hiányzó mező).
+
+  /api/appointments/my:
+    get:
+      summary: Bejelentkezett felhasználó saját időpontjainak lekérése
+      description: A token alapján szűri az adatokat. Páciensnek a sajátjait, orvosnak a hozzá rendelt eseteket adja vissza.
+      tags: [Appointments]
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: A felhasználóhoz tartozó időpontok listája.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AppointmentFullResponse'
 
   /api/appointments/{id}:
     put:
       summary: Időpont módosítása vagy válasz
       description: |
-        - **Admin**: Bármit módosíthat.
-        - **Orvos**: Elfogadhatja (CONFIRMED) vagy új időt javasolhat (PROPOSED).
-        - **Páciens**: Elfogadhatja az orvos ajánlatát (CONFIRMED) vagy lemondhatja (CANCELLED).
+        **Okos logika:**
+        - Ha az **Orvos** vagy **Admin** módosítja az időt (`startTime`/`endTime`), a státusz automatikusan `PROPOSED` lesz.
+        - **Páciens** csak akkor válthat `CONFIRMED`-re, ha az orvos javaslatot tett, egyébként csak `CANCELLED`-re válthat.
       tags: [Appointments]
       security:
         - bearerAuth: []
@@ -75,97 +78,71 @@ paths:
           required: true
           schema:
             type: string
+          example: "65c123abc456def789012345"
       requestBody:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  enum: [PENDING, CONFIRMED, PROPOSED, CANCELLED, REJECTED]
-                startTime:
-                  type: string
-                  format: date-time
-                endTime:
-                  type: string
-                  format: date-time
+              $ref: '#/components/schemas/AppointmentUpdate'
       responses:
         200:
-          description: Sikeres frissítés
-        403:
-          description: Nincs jogosultság a módosításhoz vagy tiltott státuszátmenet
-          
-  /api/appointments/my:
-    get:
-      summary: Bejelentkezett felhasználó saját időpontjainak lekérése
-      description: |
-        A token alapján azonosítja a felhasználót. 
-        - **Páciensnél**: A saját foglalásait adja vissza.
-        - **Orvosnál**: A hozzá beosztott pácienseket és időpontokat adja vissza.
-      tags: [Appointments]
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: Sikeres lekérdezés
+          description: Sikeres frissítés.
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AppointmentResponse'
-              # --- PÉLDA VÁLASZ ---
-              example:
-                - _id: "65c123abc456def789012345"
-                  status: "CONFIRMED"
-                  startTime: "2026-02-20T10:00:00.000Z"
-                  endTime: "2026-02-20T11:00:00.000Z"
-                  doctor_id:
-                    _id: "65b987def654abc321098765"
-                    name: "Dr. Kovács Antal"
-                    specialization: "Kardiológus"
-                    phone: "+36301112233"
-                  patient_id:
-                    _id: "65a456ghi789jkl012345678"
-                    name: "Minta János"
-                    email: "janos@gmail.com"
-                    phone: "+36704445566"
-                  service_id:
-                    topic: "Szívultrahang"
-                    location: "B épület, 2. emelet"
-                    price: 25000
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        500:
-          description: Szerver hiba a lekérdezés során
+                $ref: '#/components/schemas/AppointmentFullResponse'
+        403:
+          description: Nincs jogosultság a módosításhoz (pl. idegen időpont vagy tiltott státuszátmenet).
+        404:
+          description: Az időpont nem található.
 
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Nincs érvényes token.
+    Forbidden:
+      description: Nincs jogosultság a művelethez.
+
   schemas:
-    AppointmentResponse:
+    AppointmentCreate:
+      type: object
+      required: [doctor_id, service_id, startTime]
+      properties:
+        doctor_id:
+          type: string
+          example: "65b987def654abc321098765"
+        patient_id:
+          type: string
+          description: Csak orvos/admin általi rögzítésnél kötelező.
+          example: "65a456ghi789jkl012345678"
+        service_id:
+          type: string
+          example: "65c456def..."
+        startTime:
+          type: string
+          format: date-time
+          example: "2026-03-10T09:00:00Z"
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+          example: "2026-03-10T09:30:00Z"
+        referral_type:
+          type: string
+          enum: [SELF, DOCTOR]
+        referred_by:
+          type: string
+          description: Beutaló orvos ID-ja (ha a páciens hozza a beutalót).
+
+    AppointmentUpdate:
       type: object
       properties:
-        _id:
-          type: string
-        doctor_id:
-          type: object
-          properties:
-            _id: { type: string }
-            name: { type: string }
-            specialization: { type: string }
-        patient_id:
-          type: object
-          properties:
-            _id: { type: string }
-            name: { type: string }
-            email: { type: string }
-        service_id:
-          type: object
-          properties:
-            _id: { type: string }
-            topic: { type: string }
-            location: { type: string }
-            price: { type: string }
         startTime:
           type: string
           format: date-time
@@ -174,7 +151,45 @@ components:
           format: date-time
         status:
           type: string
-          example: "PENDING"
-        referral_type:
+          enum: [PENDING, CONFIRMED, PROPOSED, CANCELLED, REJECTED]
+        service_id:
           type: string
-          example: "SELF"
+
+    AppointmentFullResponse:
+      type: object
+      properties:
+        _id: { type: string, example: "65c123abc456def789012345" }
+        status: { type: string, example: "PENDING" }
+        startTime: { type: string, format: date-time, example: "2026-03-10T09:00:00.000Z" }
+        endTime: { type: string, format: date-time, nullable: true, example: "2026-03-10T09:30:00.000Z" }
+        referral_type: { type: string, example: "DOCTOR" }
+        doctor_id:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string, example: "Dr. Kovács Antal" }
+            specialization: { type: string, example: "Kardiológus" }
+            phone: { type: string, example: "+36301112233" }
+        patient_id:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string, example: "Minta János" }
+            email: { type: string, example: "janos@gmail.com" }
+            phone: { type: string, example: "+36704445566" }
+        service_id:
+          type: object
+          properties:
+            _id: { type: string }
+            topic: { type: string, example: "Szívultrahang" }
+            location: { type: string, example: "B épület, 2. emelet" }
+            price: { type: number, example: 25000 }
+        referred_by:
+          type: object
+          nullable: true
+          properties:
+            _id: { type: string }
+            name: { type: string, example: "Dr. Háziorvos Károly" }
+            specialization: { type: string, example: "Háziorvos" }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
