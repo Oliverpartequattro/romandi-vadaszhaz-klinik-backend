@@ -56,6 +56,37 @@ router.get('/patient/:patientId', protect, async (req, res) => {
     }
 });
 
+// @desc    1.3 Bejelentkezett felhasználó saját rekordjainak lekérése
+// @route   GET /api/records/my
+router.get('/my', protect, async (req, res) => {
+    try {
+        let filter = {};
+
+        // Ha páciens: a saját leleteit látja
+        if (req.user.role === 'PATIENT') {
+            filter = { patient: req.user._id };
+        } 
+        // Ha orvos: az általa kiállított leleteket látja
+        else if (req.user.role === 'DOCTOR') {
+            filter = { doctor: req.user._id };
+        }
+        // Admin: láthat mindent, vagy üresen hagyva a saját "orvosi" rekordjait (ha van ilyen)
+
+        const myRecords = await Record.find(filter)
+            .populate('patient', 'name email tajNumber')
+            .populate('doctor', 'name specialization')
+            .populate('service_id', 'topic location')
+            .sort({ createdAt: -1 }); // A legfrissebb lelet legfelül
+
+        res.json(myRecords);
+    } catch (error) {
+        res.status(500).json({ 
+            message: "Hiba a saját rekordok lekérésekor", 
+            error: error.message 
+        });
+    }
+});
+
 // @desc    2. Új ellátási rekord létrehozása (Orvos vagy Admin)
 // @route   POST /api/records
 router.post('/', protect, doctorOrAdmin, async (req, res) => {
