@@ -91,6 +91,7 @@ router.get('/my', protect, async (req, res) => {
 // @route   POST /api/records
 router.post('/', protect, doctorOrAdmin, async (req, res) => {
     try {
+        // Figyelem: A req.body-ból service néven jön az ID
         const { patient, appointment_id, service, description } = req.body;
 
         // 1. Ellenőrizzük, hogy a páciens létezik-e
@@ -102,9 +103,9 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
         // 2. Rekord létrehozása
         const newRecord = new Record({
             patient,
-            doctor: req.user._id, // Aki be van jelentkezve
+            doctor: req.user._id, // A bejelentkezett orvos
             appointment_id,
-            service,
+            service: service, // Itt rendeljük hozzá a kapott service ID-t
             description
         });
 
@@ -114,11 +115,30 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
         await User.findByIdAndUpdate(patient, {
             $push: { records: savedRecord._id }
         });
+
+        // 4. POPULÁLÁS: Kikérjük a neveket az ID-k helyett a válaszhoz és az emailhez
+        const populatedRecord = await Record.findById(savedRecord._id)
+            .populate('doctor', 'name')
+            .populate('service', 'topic location');
+
+        // 5. EMAIL KÜLDÉS: Értesítés a páciensnek
+        // Importáld a sendDoctorResponseEmail-t a mail.js-ből!
+        const { sendDoctorResponseEmail } = await import('../mail/mail.js'); // Vagy a fájl tetején importáld
         
-        console.log(`--- Új rekord mentve és hozzáfűzve a pácienshez: ${patientExists.name} ---`);
-        
-        res.status(201).json(savedRecord);
+        sendDoctorResponseEmail(
+            patientExists.email,
+            patientExists.name,
+            populatedRecord.service?.topic || "Orvosi vizsgálat",
+            populatedRecord.doctor?.name || req.user.name
+        ).catch(err => console.error("❌ Email hiba a leletnél:", err.message));
+
+        console.log(`--- ✅ Új rekord mentve és értesítés elküldve: ${patientExists.name} ---`);
+
+        // A válaszban már a teljes, kifejtett objektum megy vissza
+        res.status(201).json(populatedRecord);
+
     } catch (error) {
+        console.error("❌ Hiba a rekord mentésekor:", error);
         res.status(500).json({ 
             message: "Hiba a rekord mentésekor", 
             error: error.message 
