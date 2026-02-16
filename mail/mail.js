@@ -1,5 +1,10 @@
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
 
+// Csak akkor próbálja beolvasni a fájlt, ha nem Vercelen (localhoston) vagyunk
+if (process.env.NODE_ENV !== 'production') {
+    dotenv.config(); 
+}
 // Segédfüggvény a transporter létrehozásához (hogy ne ismételjük a kódot)
 const getTransporter = () => {
     if (!process.env.EMAIL_PASS) {
