@@ -1,0 +1,28 @@
+### Változók definiálása
+@baseUrl = http://localhost:5000/api
+# Éles teszteléshez:
+# @baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+
+### 1. Adatbázis teljes ürítése (Item-by-item törlés logolva)
+# Ezt futtasd először, hogy ne legyenek duplikált email címek a seedelésnél!
+DELETE {{baseUrl}}/admin/reset-db
+Content-Type: application/json
+
+### 2. Magyar nyelvű tesztadatok betöltése (Seed)
+# Ez létrehozza az Admin Andrea, Dr. Teszt Ottó és Kovács János profilokat.
+POST {{baseUrl}}/admin/seed
+Content-Type: application/json
+
+### 4. ELLENŐRZÉS: Szolgáltatások lekérése
+GET {{baseUrl}}/services
+Content-Type: application/json
+
+### 5. Bejelentkezés tesztelése a seedelt adatokkal
+# @name loginPatient
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "kovacs.janos@teszt.hu",
+    "password": "PatientPassword123"
+}
