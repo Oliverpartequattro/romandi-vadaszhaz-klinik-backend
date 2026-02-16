@@ -29,7 +29,7 @@ router.post('/', protect, async (req, res) => {
     try {
         const { doctor_id, service_id, startTime, endTime, referral_type, referred_by } = req.body;
 
-        // Logika: Ha orvos hozza létre, akkor ő a beutaló, ha páciens, akkor SELF
+        // Logika: Ki hozza létre?
         const final_referral_type = req.user.role === 'DOCTOR' ? 'DOCTOR' : (referral_type || 'SELF');
         const final_referred_by = req.user.role === 'DOCTOR' ? req.user._id : referred_by;
 
@@ -38,28 +38,45 @@ router.post('/', protect, async (req, res) => {
             patient_id: req.user.role === 'PATIENT' ? req.user._id : req.body.patient_id,
             service_id,
             startTime,
-            endTime : endTime || null, // Nem kötelező megadni
-            status: 'PENDING', // Alapértelmezetten jóváhagyásra vár
+            endTime: endTime || null,
+            status: 'PENDING',
             referral_type: final_referral_type,
             referred_by: final_referred_by,
             created_by: req.user._id
         });
 
         const savedAppointment = await newAppointment.save();
-        // Visszaküldés előtt populáljuk, hogy a frontend látványos választ kapjon
+
+        // --- POPULÁLÁS: Kikérjük az adatokat az ID-k alapján ---
         const populatedAppointment = await Appointment.findById(savedAppointment._id)
-        .populate('doctor_id', 'name specialization')
-        .populate('service_id', 'topic location price');
+            .populate('doctor_id', 'name specialization') // Csak a nevet és szakmát kérjük le
+            .populate('service_id', 'topic location price'); // A téma, helyszín és ár kell nekünk
+
+        // Formázzuk a dátumot olvashatóbbra az emailhez (opcionális, de szebb)
+        const formattedDate = new Date(populatedAppointment.startTime).toLocaleString('hu-HU', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // --- EMAIL KÜLDÉS ---
+        // Most már a populált adatokból vesszük ki a neveket!
+        // Fontos: ne használj await-et, ha nem akarod, hogy a lassú email küldés miatt várjon a felhasználó
         sendBookEmail(
             req.user.email, 
             req.user.name,
-            populatedAppointment.startTime,
-            populatedAppointment.service_id.topic,
-            populatedAppointment.doctor_id.name
-        )
-        
+            formattedDate, // A szép dátum
+            populatedAppointment.service_id?.topic || "Általános vizsgálat", // Szolgáltatás neve
+            populatedAppointment.doctor_id?.name || "Klinikai orvos" // Orvos neve
+        ).catch(err => console.error("Email hiba a foglalásnál:", err.message));
+
+        // A válaszban is a teljes adat megy vissza a frontendnek
         res.status(201).json(populatedAppointment);
+
     } catch (error) {
+        console.error("Foglalási hiba:", error);
         res.status(400).json({ message: 'Hiba a foglalás létrehozásakor', error: error.message });
     }
 });
