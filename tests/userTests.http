@@ -58,7 +58,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OTJjNDQzN
 Content-Type: application/json
 
 {
-    "address": "9142, Rábapatona, Pusztulat u.666"
+    "address": "9142, Rábapatona, Pusztulat u.6666"
 }
 
 ###6. Kijelentkezés (Token törlése a kliens oldalon, itt csak szimbolikus)

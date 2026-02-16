@@ -1,14 +1,8 @@
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-
-// Csak akkor próbálja beolvasni a fájlt, ha nem Vercelen (localhoston) vagyunk
-if (process.env.NODE_ENV !== 'production') {
-    dotenv.config(); 
-}
 // Segédfüggvény a transporter létrehozásához (hogy ne ismételjük a kódot)
 const getTransporter = () => {
     if (!process.env.EMAIL_PASS) {
-        console.error("❌ KRITIKUS HIBA: Az EMAIL_PASS környezeti változó nem található!");
+        console.error("❌ VÉGZETES HIBA: Az EMAIL_PASS környezeti változó nem található!");
         return null;
     }
     return nodemailer.createTransport({
