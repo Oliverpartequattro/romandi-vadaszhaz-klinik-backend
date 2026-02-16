@@ -1,10 +1,10 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNWQxODQzNjA1Mjk5MTgyNWIxYyIsImlhdCI6MTc3MDk3Mjg0NywiZXhwIjoxNzczNTY0ODQ3fQ.jkGye_KOwrTBc-N5srVy8L0nXx5nfcGOLyZChKaoOkY
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNWQxODQzNjA1Mjk5MTgyNWIxYyIsImlhdCI6MTc3MTIyNjkyNSwiZXhwIjoxNzczODE4OTI1fQ.NrQQSrY3WSGJHGJDUzyukdTbzk2ORUn1i4UJ_aQ12CM
 Content-Type: application/json
 ### 1.2 Összes orvos lekérése
 GET {{baseUrl}}/users/doctors
@@ -45,7 +45,7 @@ POST {{baseUrl}}/users/login
 Content-Type: application/json
 
 {
-    "email": "pinter.balint@students.jedlik.eu",
+    "email": "gyarkemenyfogas@gmail.com",
     "password": "doktorcigany2"
 }
 ### 4. Profil lekérése
@@ -54,12 +54,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmN
 
 ### 5. Profil frissítése
 PUT {{baseUrl}}/users/profile
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGY0MjQxZWE5Njc5ZDg3ODBjNjIzNSIsImlhdCI6MTc3MDk5NzcxMCwiZXhwIjoxNzczNTg5NzEwfQ.ByN-cp8wGQPAgob7x6BJMbaS9GumloIHOd0llU5ibaA
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OTJjNDQzNmUzZTIyMmRhZWIxYjMzNSIsImlhdCI6MTc3MTIyNzA4NiwiZXhwIjoxNzczODE5MDg2fQ.UKkHN57erg_VU9pKmTVPjZok4thsZcXFT3edO_2Zy-E
 Content-Type: application/json
 
 {
-    "name": "Pintér Bálint",
-    "address": "Csöves"
+    "address": "9142, Rábapatona, Pusztulat u.666"
 }
 
 ###6. Kijelentkezés (Token törlése a kliens oldalon, itt csak szimbolikus)

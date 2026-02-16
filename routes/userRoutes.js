@@ -190,7 +190,7 @@ router.put('/profile', protect, async (req, res) => {
             const updatedUser = await user.save();
 
             console.log(`--- Profil frissítve: ${updatedUser.email} ---`);
-            sendModifyEmail(updatedUser.email, updatedUser.name);
+            await sendModifyEmail(updatedUser.email, updatedUser.name);
             res.json({
                 _id: updatedUser._id,
                 name: updatedUser.name,
