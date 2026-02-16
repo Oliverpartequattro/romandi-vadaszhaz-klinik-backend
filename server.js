@@ -9,6 +9,7 @@ import userRoutes from "./routes/userRoutes.js";
 import recordRoutes from "./routes/recordRoutes.js";
 import appointmentRoutes from "./routes/appointmentRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js";
+import adminRoutes from "./routes/adminRoutes.js";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
 
@@ -29,6 +30,7 @@ app.use("/api/users", userRoutes);
 app.use('/api/records', recordRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/services', serviceRoutes);
+app.use('/api/admin', adminRoutes);
 app.get("/", (req, res) => res.send("A szerver fut!"));
 
 // --- SWAGGER KONFIGURÁCIÓ (MANUÁLIS ÖSSZEFŰZÉS) ---
