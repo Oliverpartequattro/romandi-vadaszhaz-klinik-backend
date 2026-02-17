@@ -75,6 +75,7 @@ router.post('/seed', async (req, res) => {
                 phone: "06203333333",
                 birthDate: new Date("1992-03-15"),
                 role: "PATIENT",
+                gender: "MALE",
                 tajNumber: "123456789",
                 address: "9021 Győr, Putrifészek utca 2."
             }
