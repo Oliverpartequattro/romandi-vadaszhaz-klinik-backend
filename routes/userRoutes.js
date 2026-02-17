@@ -61,7 +61,7 @@ router.get("/patients", protect, doctorOrAdmin, async (req, res) => {
 // @desc    2. Új felhasználó regisztrálása
 // @route   POST /api/users/register
 router.post("/register", async (req, res) => {
-  const { name, email, password, phone, tajNumber, address, role } = req.body;
+  const { name, email, password, phone, tajNumber, address, role, gender } = req.body;
   console.log(`--- Regisztrációs kísérlet: ${email} (${name}) ---`);
 
   try {
@@ -85,6 +85,7 @@ router.post("/register", async (req, res) => {
         tajNumber: user.tajNumber,
         address: user.address,
         birthDate: user.birthDate,
+        gender: user.gender,
         role: user.role,
         token: generateToken(user._id),
       });
@@ -119,6 +120,7 @@ router.post("/login", async (req, res) => {
         birthDate: user.birthDate,
         specialization: user.specialization,
         role: user.role,
+        gender: user.gender,
         token: generateToken(user._id),
       });
     } else {
@@ -156,6 +158,7 @@ router.get("/profile", protect, async (req, res) => {
         tajNumber: user.tajNumber,
         address: user.address,
         role: user.role,
+        gender: user.gender,
         records: user.records // Most már egyszerre lesz benne a doctor és a service is
       });
     } else {
@@ -180,6 +183,7 @@ router.put('/profile', protect, async (req, res) => {
             user.address = req.body.address || user.address;
             user.tajNumber = req.body.tajNumber || user.tajNumber;
             user.birthDate = req.body.birthDate || user.birthDate;
+            user.gender = req.body.gender || user.gender;
 
             // 2. JELSZÓ LOGIKA: Csak akkor írjuk felül, ha TÉNYLEG küldtek újat
             // és az nem csak egy üres szóköz/string.
@@ -199,6 +203,7 @@ router.put('/profile', protect, async (req, res) => {
                 address: updatedUser.address,
                 birthDate: updatedUser.birthDate,
                 tajNumber: updatedUser.tajNumber,
+                gender: updatedUser.gender,
                 role: updatedUser.role,
                 token: generateToken(updatedUser._id),
             });
