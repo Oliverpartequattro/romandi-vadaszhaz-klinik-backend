@@ -45,4 +45,26 @@ router.post('/', protect, async (req, res) => {
     }
 });
 
+// @desc    3. Egy adott orvoshoz tartozó szolgáltatások lekérése
+// @route   GET /api/services/doctor/:doctorId
+router.get('/:doctorId', async (req, res) => {
+    try {
+        const doctorId = req.params.doctorId;
+        
+        // Megkeressük az összes olyan szolgáltatást, ahol a doctor_id egyezik
+        const services = await Service.find({ doctor_id: doctorId }).sort({ date: 1 });
+
+        if (!services || services.length === 0) {
+            return res.status(404).json({ message: 'Ehhez az orvoshoz nem tartoznak szolgáltatások.' });
+        }
+
+        res.json(services);
+    } catch (error) {
+        res.status(500).json({ 
+            message: 'Hiba az orvos szolgáltatásainak lekérésekor', 
+            error: error.message 
+        });
+    }
+});
+
 export default router;

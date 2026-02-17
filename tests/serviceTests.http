@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 0. Admin login
 # @name adminLogin
@@ -83,3 +83,6 @@ Content-Type: application/json
     "name": "Hackelési kísérlet",
     "doctor_id": "698c3994ee508c5a604e1987"
 }
+
+### 3. Adott orvos szolgáltatásainak lekérése
+GET {{baseUrl}}/services/{{doctorLogin.response.body._id}}
