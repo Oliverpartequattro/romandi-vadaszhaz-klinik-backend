@@ -41,10 +41,30 @@ const userSchema = new mongoose.Schema(
         "Érvénytelen magyar telefonszám formátum",
       ],
     },
-    birthDate: {
-      type: Date,
-      required: [true, "Születési dátum megadása kötelező"],
-    },
+// models/User.js
+
+birthDate: { 
+    type: Date, 
+    required: [true, "Születési dátum megadása kötelező"],
+    validate: {
+        validator: function(value) {
+            // Kiszámoljuk a különbséget évben
+            const today = new Date();
+            const birthDate = new Date(value);
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            // Finomhangolás: ha még nem volt idén születésnapja, levonunk egyet
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            // Validáció: Ne lehessen a jövőben ÉS ne legyen idősebb 110 évnél
+            return age >= 0 && age <= 110;
+        },
+        message: "Érvénytelen születési dátum! A kor nem lehet negatív, és nem haladhatja meg a 110 évet."
+    }
+},      
     role: {
       type: String,
       enum: ["ADMIN", "DOCTOR", "PATIENT"],
