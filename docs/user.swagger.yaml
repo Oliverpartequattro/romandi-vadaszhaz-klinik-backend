@@ -64,6 +64,7 @@ paths:
               phone: "+36301234567"
               birthDate: "1990-05-15"
               role: "PATIENT"
+              gender: "MALE"
               tajNumber: "123456789"
               address: "1051 Budapest, Erzsébet tér 1."
               birthDate: "1990-01-01"
@@ -81,6 +82,7 @@ paths:
                 email: "kovacs.bela@example.hu"
                 phone: "+36301234567"
                 role: "PATIENT"
+                gender: "MALE"
                 tajNumber: "123456789"
                 address: "1051 Budapest, Erzsébet tér 1."
                 birthDate: "1990-01-01"
@@ -235,6 +237,7 @@ components:
         email: { type: string, example: "janos@gmail.com" }
         phone: { type: string, example: "+36701112233" }
         role: { type: string, enum: [ADMIN, DOCTOR, PATIENT], example: "PATIENT" }
+        gender: { type: string, enum: [MALE, FEMALETOR], example: "MALE" }
         specialization: { type: string, example: "Nincs (Páciens)" }
         tajNumber: { type: string, example: "123 456 789" }
         address: { type: string, example: "9022 Győr, Fő tér 1." }
@@ -250,6 +253,7 @@ components:
         password: { type: string, example: "pwd123" }
         phone: { type: string, example: "+36307778899" }
         role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT, example: "PATIENT" }
+        gender: { type: string, enum: [MALE, FEMALETOR], example: "MALE" }
         specialization: { type: string, example: "" }
         tajNumber: { type: string, example: "987 654 321" }
         address: { type: string, example: "1051 Budapest, Petőfi u. 10." }
@@ -269,6 +273,7 @@ components:
         address: { type: string }
         birthDate: { type: date, example: "1990-01-01" }
         tajNumber: { type: string }
+        gender: { type: string }
 
     RecordPopulated:
       type: object
