@@ -10,3 +10,7 @@ Content-Type: application/json
 ### 2. Magyar nyelvű tesztadatok betöltése (Seed)
 POST {{baseUrl}}/admin/seed
 Content-Type: application/json
+
+### 3. Admin Statisztikák lekérése
+GET {{baseUrl}}/admin/stats
+Content-Type: application/json

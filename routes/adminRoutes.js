@@ -161,4 +161,72 @@ router.post('/seed', async (req, res) => {
     }
 });
 
+router.get('/stats', async (req, res) => {
+    try {
+        // 1. Összes felhasználó száma (szerepkörönként bontva is hasznos)
+        const totalUsers = await User.countDocuments();
+        const patientCount = await User.countDocuments({ role: 'PATIENT' });
+        const doctorCount = await User.countDocuments({ role: 'DOCTOR' });
+
+        // 2. Mai időpontok száma
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+
+        const appointmentsToday = await Appointment.countDocuments({
+            startTime: { $gte: startOfToday, $lte: endOfToday }
+        });
+
+        // 3. Legnépszerűbb szolgáltatások (Aggregáció az időpontok alapján)
+        const topServices = await Appointment.aggregate([
+            { $group: { _id: "$service_id", count: { $sum: 1 } } },
+            { $sort: { count: -1 } },
+            { $limit: 3 },
+            {
+                $lookup: {
+                    from: "services", // A kollekció neve az adatbázisban (többnyire kisbetűs többesszám)
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "serviceInfo"
+                }
+            },
+            { $unwind: "$serviceInfo" },
+            { $project: { topic: "$serviceInfo.topic", count: 1 } }
+        ]);
+
+        // 4. Havi bevétel számítása (Tisztítani kell a "25000 Ft" típusú Stringeket)
+        const allServices = await Service.find({});
+        const monthlyRevenue = allServices.reduce((total, service) => {
+            // Csak a számokat tartjuk meg a stringből (pl "25000 Ft" -> 25000)
+            const priceValue = parseInt(service.price.replace(/[^0-9]/g, '')) || 0;
+            return total + priceValue;
+        }, 0);
+
+        res.status(200).json({
+            success: true,
+            stats: {
+                users: {
+                    total: totalUsers,
+                    patients: patientCount,
+                    doctors: doctorCount
+                },
+                activity: {
+                    appointmentsToday: appointmentsToday
+                },
+                business: {
+                    totalRevenueEstimate: monthlyRevenue,
+                    currency: "Ft",
+                    topServices: topServices
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ Stats Error:", error.message);
+        res.status(500).json({ message: "Hiba a statisztikák lekérésekor", error: error.message });
+    }
+});
+
 export default router;
