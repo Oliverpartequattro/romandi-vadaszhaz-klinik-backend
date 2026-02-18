@@ -1,8 +1,34 @@
+openapi: 3.0.0
+info:
+  title: Records API
+  version: "1.0.0"
+  description: Endpoints for medical records (creating records, querying patient histories and own records).
+tags:
+  - name: Records
+    description: Manage patient medical records
 paths:
   /api/records:
-    post:
-      summary: Új ellátási lelet rögzítése (Csak Orvos vagy Admin)
+    get:
       tags: [Records]
+      summary: Get all records (Admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of records (populated)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecordResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Admin only
+    post:
+      tags: [Records]
+      summary: Create a new record (Doctor or Admin)
       security:
         - bearerAuth: []
       requestBody:
@@ -10,37 +36,28 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [patient, service_id, description]
-              properties:
-                patient:
-                  type: string
-                  description: A páciens MongoDB ID-ja.
-                  example: "65a456ghi789jkl012345678"
-                appointment_id:
-                  type: string
-                  description: Az időpont ID-ja, amihez a lelet tartozik.
-                  example: "65c123abc456def789012345"
-                service_id:
-                  type: string
-                  example: "65c456def..."
-                description:
-                  type: string
-                  description: Orvosi vélemény, diagnózis.
-                  example: "Kontroll vizsgálat, panaszmentes."
+              $ref: '#/components/schemas/RecordCreate'
+            example:
+              patient: "65a456ghi789jkl012345678"
+              appointment_id: "65c123abc456def789012345"
+              service: "65c456def..."
+              description: "Kontroll vizsgálat - panaszmentes, javasolt kontroll 6 hónap múlva."
       responses:
-        201:
-          description: Lelet sikeresen létrehozva és hozzáfűzve a páciens adataihoz.
-        403:
-          description: Nincs jogosultság (Csak orvosok/adminok rögzíthetnek).
-        404:
-          description: A páciens nem található.
-
+        '201':
+          description: Created record (populated)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RecordResponse'
+        '400':
+          description: Validation error
+        '403':
+          description: Only doctors or admins may create records
   /api/records/patient/{patientId}:
     get:
-      summary: Egy adott páciens összes rekordja (Kórtörténet)
-      description: Orvos/Admin bárkit lekérhet, a Páciens csak a sajátját.
       tags: [Records]
+      summary: Get all records for a patient
+      description: Doctors and Admins may view any patient; a patient may view only their own history.
       security:
         - bearerAuth: []
       parameters:
@@ -50,77 +67,90 @@ paths:
           schema:
             type: string
       responses:
-        200:
-          description: A páciens kórtörténete
-        403:
-          description: Nincs jogosultság más adatainak megtekintéséhez
-
-  /api/records/my:
-    get:
-      summary: Bejelentkezett felhasználó saját leleteinek lekérése
-      description: |
-        A token alapján szűri a leleteket:
-        - **Páciens**: Az összes orvosi leletét megkapja (kórtörténet).
-        - **Orvos**: Az összes olyan leletet megkapja, amit ő rögzített a páciensekről.
-      tags: [Records]
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: Sikeres lekérdezés.
+        '200':
+          description: Patient records array
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/RecordResponse'
-              example:
-                - _id: "65d1234567890abcdef12345"
-                  description: "A páciensnél enyhe vérnyomás emelkedés tapasztalható. Pihenés javasolt."
-                  createdAt: "2026-02-13T10:00:00.000Z"
-                  patient:
-                    _id: "65a456ghi789jkl012345678"
-                    name: "Kovács Béla"
-                    tajNumber: "123 456 789"
-                  doctor:
-                    _id: "65b987def654abc321098765"
-                    name: "Dr. Romándi Antal"
-                    specialization: "Kardiológus"
-                  service_id:
-                    topic: "Kardiológiai szakvizsgálat"
-                    location: "A épület, 102. ajtó"
-        401:
-          description: Nincs érvényes token (Nincs bejelentkezve).
-        500:
-          description: Szerveroldali hiba.
-
+        '403':
+          description: Forbidden (no access to other's records)
+        '404':
+          description: Patient not found
+  /api/records/my:
+    get:
+      tags: [Records]
+      summary: Get own records (patient or doctor)
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Array of records relevant to the authenticated user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RecordResponse'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Missing or invalid token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
   schemas:
-    Record:
+    RecordCreate:
       type: object
-      required:
-        - patient
-        - description
+      required: [patient, description, service]
       properties:
-        _id:
-          type: string
-          example: 65c8e1234567890123456789
         patient:
-          oneOf:
-            - type: string
-            - $ref: "#/components/schemas/User"
-          description: A páciens ID-ja vagy a populált adatai
-        doctor:
-          oneOf:
-            - type: string
-            - $ref: "#/components/schemas/User"
-          description: Az orvos ID-ja vagy a populált adatai
+          type: string
+          description: Patient MongoDB ID
+        appointment_id:
+          type: string
+          description: Optional appointment ID to link the record
         service:
           type: string
-          description: A szolgáltatás ID-ja
+          description: Service ID
         description:
           type: string
-          example: "A páciens erős fejfájásra panaszkodott. Vérnyomás rendben."
-        createdAt:
-          type: string
-          format: date-time
+    RecordResponse:
+      type: object
+      properties:
+        _id: { type: string }
+        patient:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string }
+            tajNumber: { type: string }
+        doctor:
+          type: object
+          properties:
+            _id: { type: string }
+            name: { type: string }
+            specialization: { type: string }
+        appointment_id: { type: string }
+        service:
+          type: object
+          properties:
+            _id: { type: string }
+            topic: { type: string }
+            location: { type: string }
+            price: { type: string }
+        description: { type: string }
+        createdAt: { type: string, format: date-time }
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        error: { type: string }

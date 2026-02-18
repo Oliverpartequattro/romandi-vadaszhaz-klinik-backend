@@ -1,56 +1,77 @@
+openapi: 3.0.0
+info:
+  title: Users API
+  version: "1.0.0"
+  description: User-related endpoints for the Klinik system (registration, login, profile and user management).
+tags:
+  - name: Users
+    description: Endpoints for user registration, authentication and management
 paths:
   /api/users:
     get:
-      summary: Összes felhasználó lekérése (Csak Admin)
       tags: [Users]
+      summary: Get all users (Admin only)
       security:
         - bearerAuth: []
       responses:
-        200:
-          description: Sikeres lekérdezés
+        '200':
+          description: Array of users
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/User'
-        401:
+                  $ref: '#/components/schemas/UserPublic'
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        403:
-          description: Nincs admin jogosultságod
+        '403':
+          description: Admin privileges required
+  /api/users/doctors:
+    get:
+      tags: [Users]
+      summary: Get list of doctors (public)
+      responses:
+        '200':
+          description: Doctors list (limited fields)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-  /api/users/doctors:
-    get:
-      summary: Az összes orvos lekérése (Publikus)
-      tags: [Users]
-      responses:
-        200:
-          description: Orvosok listája
-        500:
-          $ref: '#/components/responses/ServerError'
-
+                type: array
+                items:
+                  type: object
+                  properties:
+                    _id: { type: string }
+                    name: { type: string }
+                    specialization: { type: string }
+                    email: { type: string }
+                    phone: { type: string }
+              example:
+                - _id: "698a3e705cf74c640c1f4b1c"
+                  name: "Dr. Romándi Antal"
+                  specialization: "Kardiológus"
+                  email: "doktor@example.hu"
+                  phone: "+36301112233"
   /api/users/patients:
     get:
-      summary: Az összes páciens lekérése (Csak Orvos vagy Admin)
       tags: [Users]
+      summary: Get patients (Doctor or Admin)
       security:
         - bearerAuth: []
       responses:
-        200:
-          description: Páciensek listája minden adattal
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        403:
-          description: Csak orvosok vagy adminok férhetnek hozzá
-
+        '200':
+          description: Patients list (safe fields)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserPatientPublic'
+        '403':
+          description: Only doctors or admins allowed
   /api/users/register:
     post:
-      summary: Új felhasználó regisztrálása
       tags: [Users]
+      summary: Register a new user
       requestBody:
         required: true
         content:
@@ -62,20 +83,22 @@ paths:
               email: "kovacs.bela@example.hu"
               password: "Password123"
               phone: "+36301234567"
-              birthDate: "1990-05-15"
+              birthDate: "1990-01-01"
               role: "PATIENT"
               gender: "MALE"
               tajNumber: "123456789"
               address: "1051 Budapest, Erzsébet tér 1."
-              birthDate: "1990-01-01"
-              specialization: ""
       responses:
-        201:
-          description: Felhasználó létrehozva
+        '201':
+          description: User created (returns created user + token)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                allOf:
+                  - $ref: '#/components/schemas/UserPublic'
+                  - type: object
+                    properties:
+                      token: { type: string }
               example:
                 _id: "65c123abc456def789012345"
                 name: "Kovács Béla"
@@ -87,73 +110,86 @@ paths:
                 address: "1051 Budapest, Erzsébet tér 1."
                 birthDate: "1990-01-01"
                 token: "eyJhbGciOiJIUzI1Ni..."
-        400:
-          description: Már létező email vagy hiányzó/hibás adatok (pl. rossz TAJ vagy jelszó formátum)
+        '400':
+          description: Validation error or user exists
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-              example:
-                message: "A jelszónak legalább 8 karakterből kell állnia, és tartalmaznia kell betűt és számot is"
-
   /api/users/login:
     post:
-      summary: Bejelentkezés
       tags: [Users]
+      summary: User login
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              required: [email, password]
-              properties:
-                email: { type: string, example: "paciens@gmail.com" }
-                password: { type: string, example: "pwd123" }
+              $ref: '#/components/schemas/UserLogin'
+            example:
+              email: "paciens@gmail.com"
+              password: "doktorcigany2"
       responses:
-        200:
-          description: Sikeres bejelentkezés
-        401:
-          description: Érvénytelen email vagy jelszó
+        '200':
+          description: Successful login (returns user fields + token)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/UserPublic'
+                  - type: object
+                    properties:
+                      token: { type: string }
+              example:
+                _id: "65c123abc456def789012345"
+                name: "Páciens Szemethy"
+                email: "paciens@gmail.com"
+                phone: "+36203333333"
+                role: "PATIENT"
+                token: "eyJhbGciOiJIUzI1Ni..."
+        '401':
+          description: Invalid credentials
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
   /api/users/logout:
     post:
-      summary: Felhasználó kijelentkezése
-      description: A kliensoldali token érvénytelenítésének nyugtázása.
       tags: [Users]
+      summary: Logout (acknowledge token invalidation client-side)
+      security:
+        - bearerAuth: []
       responses:
-        200:
-          description: Sikeres kijelentkezés
+        '200':
+          description: Logout succeeded
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  message:
-                    type: string
-                    example: "Sikeres kijelentkezés."
-        500:
-          $ref: '#/components/responses/ServerError'
-
+                  message: { type: string }
+              example:
+                message: "Sikeres kijelentkezés."
   /api/users/profile:
     get:
-      summary: Bejelentkezett felhasználó saját profilja (Rekordokkal)
       tags: [Users]
+      summary: Get current user profile (populated records)
       security:
         - bearerAuth: []
       responses:
-        200:
-          description: Profil adatok
-        401:
+        '200':
+          description: User profile including populated records
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
           $ref: '#/components/responses/Unauthorized'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
     put:
-      summary: Saját profil frissítése
       tags: [Users]
+      summary: Update own profile
       security:
         - bearerAuth: []
       requestBody:
@@ -162,18 +198,29 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdate'
+            example:
+              name: "Páciens Frissített"
+              phone: "+36709998877"
+              address: "9022 Győr, Új utca 5."
       responses:
-        200:
-          description: Profil sikeresen frissítve
-        400:
-          description: Hibás beviteli adatok
-        401:
+        '200':
+          description: Updated user with new token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
           $ref: '#/components/responses/Unauthorized'
-
   /api/users/{id}:
     delete:
-      summary: Felhasználó törlése
       tags: [Users]
+      summary: Delete a user (admin or self)
       security:
         - bearerAuth: []
       parameters:
@@ -184,111 +231,123 @@ paths:
             type: string
           example: "6989c26f47278217e6676824"
       responses:
-        200:
-          description: Sikeres törlés
-        401:
-          $ref: '#/components/responses/Unauthorized'
-        403:
-          description: Nincs jogosultság a törléshez (pl. más profilja)
+        '200':
+          description: User deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: "Felhasználó sikeresen törölve"
+        '403':
+          description: Forbidden
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        404:
+        '404':
           $ref: '#/components/responses/NotFound'
-
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
   responses:
     Unauthorized:
-      description: Nincs érvényes token (Nincs bejelentkezve)
+      description: Missing or invalid token
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
     NotFound:
-      description: A keresett elem nem található
+      description: Resource not found
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    ServerError:
-      description: Belső szerverhiba
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-  
   schemas:
-    Error:
+    UserPublic:
       type: object
       properties:
-        message: { type: string, example: "Hiba történt." }
-    User:
+        _id: { type: string }
+        name: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        role: { type: string, enum: [ADMIN, DOCTOR, PATIENT] }
+        gender: { type: string }
+        specialization: { type: string, nullable: true }
+        tajNumber: { type: string, nullable: true }
+        address: { type: string, nullable: true }
+        birthDate: { type: string, format: date }
+    UserPatientPublic:
       type: object
       properties:
-        _id: { type: string, example: "6989c26f47278217e6676824" }
-        name: { type: string, example: "Páciens János" }
-        email: { type: string, example: "janos@gmail.com" }
-        phone: { type: string, example: "+36701112233" }
-        role: { type: string, enum: [ADMIN, DOCTOR, PATIENT], example: "PATIENT" }
-        gender: { type: string, enum: [MALE, FEMALETOR], example: "MALE" }
-        specialization: { type: string, example: "Nincs (Páciens)" }
-        tajNumber: { type: string, example: "123 456 789" }
-        address: { type: string, example: "9022 Győr, Fő tér 1." }
-        birthDate: { type: date, example: "1990-01-01" }
-        token: { type: string, example: "eyJhbGciOiJIUzI1Ni..." }
-    
+        _id: { type: string }
+        name: { type: string }
+        role: { type: string }
     UserRegister:
       type: object
       required: [name, email, password, phone]
       properties:
-        name: { type: string, example: "Új Páciens" }
-        email: { type: string, example: "ujpaciens@gmail.com" }
-        password: { type: string, example: "pwd123" }
-        phone: { type: string, example: "+36307778899" }
-        role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT, example: "PATIENT" }
-        gender: { type: string, enum: [MALE, FEMALETOR], example: "MALE" }
-        specialization: { type: string, example: "" }
-        tajNumber: { type: string, example: "987 654 321" }
-        address: { type: string, example: "1051 Budapest, Petőfi u. 10." }
-        birthDate: { type: date, example: "1990-01-01" }
-
+        name: { type: string }
+        email: { type: string }
+        password: { type: string }
+        phone: { type: string }
+        birthDate: { type: string, format: date }
+        role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT }
+        gender: { type: string, enum: [MALE, FEMALE] }
+        specialization: { type: string }
+        tajNumber: { type: string }
+        address: { type: string }
+    UserLogin:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string }
+        password: { type: string }
     UserUpdate:
       type: object
-      example:
-        name: "Páciens János (Frissített)"
-        phone: "+36709998877"
-        address: "9022 Győr, Új utca 5."
       properties:
         name: { type: string }
         email: { type: string }
         password: { type: string }
         phone: { type: string }
         address: { type: string }
-        birthDate: { type: date, example: "1990-01-01" }
+        birthDate: { type: string, format: date }
         tajNumber: { type: string }
         gender: { type: string }
-
+    UserProfile:
+      allOf:
+        - $ref: '#/components/schemas/UserPublic'
+        - type: object
+          properties:
+            records:
+              type: array
+              items:
+                $ref: '#/components/schemas/RecordPopulated'
     RecordPopulated:
       type: object
       properties:
-        _id: { type: string, example: "698b05f145069be97c382db6" }
-        description: { type: string, example: "Általános kontroll, minden rendben." }
+        _id: { type: string }
+        description: { type: string }
         doctor:
           type: object
           properties:
-            _id: { type: string, example: "698a3e705cf74c640c1f4b1c" }
-            name: { type: string, example: "Dr. Példa János" }
-            specialization: { type: string, example: "Kardiológus" }
+            _id: { type: string }
+            name: { type: string }
+            specialization: { type: string }
         service:
           type: object
           properties:
-            _id: { type: string, example: "65c1234567890123456789ab" }
-            name: { type: string, example: "Kardiológiai vizsgálat" }
-        createdAt: { type: string, format: date-time, example: "2026-02-10T10:18:25.482Z" }
+            _id: { type: string }
+            topic: { type: string }
+            location: { type: string }
+        createdAt: { type: string, format: date-time }
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        error: { type: string }

@@ -1,12 +1,19 @@
+openapi: 3.0.0
+info:
+  title: Services API
+  version: "1.0.0"
+  description: Service offerings (procedures, appointments, events) handled by doctors.
+tags:
+  - name: Services
+    description: CRUD for services (create/list and doctor-specific lists)
 paths:
   /api/services:
     get:
-      summary: Összes szolgáltatás lekérése
-      description: Publikus végpont az összes elérhető orvosi szolgáltatás/idősáv listázásához.
       tags: [Services]
+      summary: List all services
       responses:
-        200:
-          description: A szolgáltatások listája
+        '200':
+          description: Array of service entries
           content:
             application/json:
               schema:
@@ -20,7 +27,7 @@ paths:
                   description: "Szívultrahangos alapvizsgálat"
                   location: "204-es vizsgáló"
                   date: "2026-05-20T10:00:00.000Z"
-                  price: "25000"
+                  price: "25000 Ft"
                   patient_id: null
                   created_by: "698a3e705cf74c640c1f4b1c"
                 - _id: "65c1234567890abc22222222"
@@ -34,9 +41,8 @@ paths:
                   created_by: "698a3e705cf74c640c1f4b1c"
 
     post:
-      summary: Új szolgáltatás létrehozása
-      description: Orvos csak saját nevében, Admin bárki nevében hozhat létre új bejegyzést.
       tags: [Services]
+      summary: Create a new service (Doctor for own, Admin for any)
       security:
         - bearerAuth: []
       requestBody:
@@ -48,84 +54,76 @@ paths:
             example:
               doctor_id: "698a3e705cf74c640c1f4b1c"
               topic: "Kardiológia"
-              description: "Rövid, 30 perces beavatkozás"
+              description: "30 perces konzultáció + EKG"
               location: "102-es vizsgáló"
               date: "2026-05-20T10:00:00.000Z"
-              price: "1 lélek"
+              price: "25000 Ft"
       responses:
-        201:
-          description: Szolgáltatás sikeresen létrehozva
+        '201':
+          description: Created service
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServiceResponse'
-        400:
-          description: Validációs hiba (hiányzó vagy rossz típusú mezők)
-        403:
-          description: Nincs jogosultságod más orvos nevében rögzíteni
-
-
-
+        '400':
+          description: Validation error
+        '403':
+          description: Forbidden (doctor creating for different doctor)
+  /api/services/{doctorId}:
+    get:
+      tags: [Services]
+      summary: Get services for a specific doctor
+      parameters:
+        - in: path
+          name: doctorId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Services for the given doctor
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ServiceResponse'
+        '404':
+          description: No services found for that doctor
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     ServiceCreateRequest:
       type: object
       required: [doctor_id, topic, description, location, date, price]
       properties:
-        doctor_id:
-          type: string
-          description: Az orvos MongoDB ID-ja
-        topic:
-          type: string
-          description: A szolgáltatás témája
-        description:
-          type: string
-        location:
-          type: string
-        date:
-          type: string
-          format: date-time
-        price:
-          type: string
-          description: Az ár, ami lehet szám vagy szöveg is
-        patient_id:
-          type: string
-          nullable: true
-
+        doctor_id: { type: string }
+        topic: { type: string }
+        description: { type: string }
+        location: { type: string }
+        date: { type: string, format: date-time }
+        price: { type: string }
+        patient_id: { type: string, nullable: true }
     ServiceResponse:
       type: object
       properties:
-        _id:
-          type: string
-        doctor_id:
-          type: string
-        topic:
-          type: string
-        description:
-          type: string
-        location:
-          type: string
-        date:
-          type: string
-          format: date-time
-        price:
-          type: string
-        patient_id:
-          type: string
-          nullable: true
-        created_by:
-          type: string
-        createdAt:
-          type: string
-          format: date-time
-        updatedAt:
-          type: string
-          format: date-time
-
+        _id: { type: string }
+        doctor_id: { type: string }
+        topic: { type: string }
+        description: { type: string }
+        location: { type: string }
+        date: { type: string, format: date-time }
+        price: { type: string }
+        patient_id: { type: string, nullable: true }
+        created_by: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
     Error:
       type: object
       properties:
-        message:
-          type: string
-        error:
-          type: string
+        message: { type: string }
+        error: { type: string }
