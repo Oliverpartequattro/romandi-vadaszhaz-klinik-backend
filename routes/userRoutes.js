@@ -4,6 +4,7 @@ import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
 import { sendWelcomeEmail, sendDeleteEmail, sendModifyEmail,} from '../mail/mail.js';
+import { ErrorResponse } from '../middleware/errorMiddleware.js';
 
 const router = express.Router();
 // JWT token generálása
@@ -25,7 +26,7 @@ router.get("/", protect, admin, async (req, res) => {
 
     res.json(users);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    next(new ErrorResponse(error.message, 500));
   }
 });
 
@@ -39,7 +40,7 @@ router.get("/doctors", async (req, res) => {
     
     res.json(doctors);
   } catch (error) {
-    res.status(500).json({ message: "Hiba az orvosok lekérésekor", error: error.message });
+    next(new ErrorResponse("Hiba az orvosok lekérésekor: " + error.message, 500));
   }
 });
 
@@ -53,7 +54,7 @@ router.get("/patients", protect, doctorOrAdmin, async (req, res) => {
     
     res.json(patients);
   } catch (error) {
-    res.status(500).json({ message: "Hiba a páciensek lekérésekor", error: error.message });
+    next(new ErrorResponse("Hiba a páciensek lekérésekor: " + error.message, 500));
   }
 });
 
@@ -92,7 +93,7 @@ router.post("/register", async (req, res) => {
     }
   } catch (error) {
     console.error(`Hiba a regisztráció során (${email}):`, error.message);
-    res.status(500).json({ message: "Szerver hiba", error: error.message });
+    next(new ErrorResponse("Szerver hiba a regisztráció során: " + error.message, 500));
   }
 });
 
@@ -132,7 +133,7 @@ router.post("/login", async (req, res) => {
     }
   } catch (error) {
     console.error(`Hiba a login során:`, error.message);
-    res.status(500).json({ message: "Szerver hiba", error: error.message });
+    next(new ErrorResponse("Szerver hiba a login során: " + error.message, 500));
   }
 });
 
@@ -165,7 +166,7 @@ router.get("/profile", protect, async (req, res) => {
       res.status(404).json({ message: "Felhasználó nem található" });
     }
   } catch (error) {
-    res.status(500).json({ message: "Szerver hiba", error: error.message });
+    next(new ErrorResponse("Szerver hiba a profil lekérése során: " + error.message, 500));
   }
 });
 
@@ -220,7 +221,7 @@ router.put('/profile', protect, async (req, res) => {
         }
         
         console.error('Hiba a profil frissítésekor:', error.message);
-        res.status(500).json({ message: 'Szerver hiba a frissítés során', error: error.message });
+        next(new ErrorResponse("Szerver hiba a frissítés során: " + error.message, 500));
     }
 });
 
@@ -232,7 +233,7 @@ router.post("/logout", protect, (req, res) => {
         
         res.status(200).json({ message: "Sikeres kijelentkezés." });
     } catch (error) {
-        res.status(500).json({ message: "Hiba a kijelentkezés során" });
+        next(new ErrorResponse("Hiba a kijelentkezés során: " + error.message, 500));
     }
 });
 
@@ -264,18 +265,18 @@ router.delete("/:id", protect, async (req, res) => {
         sendDeleteEmail(user.email, user.name);
         res.json({ message: "Felhasználó sikeresen törölve" });
       } else {
-        res.status(404).json({ message: "Felhasználó nem található" });
+        next(new ErrorResponse("Felhasználó nem található", 404));
       }
 
     } else {
       // Ha nem admin és nem a saját ID-ja
       console.warn(`Jogosulatlan törlési kísérlet! ${req.user.email} -> ID: ${userIdToDelete}`);
-      res.status(403).json({ message: "Nincs jogosultságod más felhasználót törölni!" });
+      next(new ErrorResponse("Nincs jogosultságod más felhasználót törölni!", 403));
     }
 
   } catch (error) {
     console.error(`Hiba a törlés során:`, error.message);
-    res.status(500).json({ message: "Szerver hiba a törlésnél", error: error.message });
+    next(new ErrorResponse("Szerver hiba a törlésnél: " + error.message, 500));
   }
 });
 

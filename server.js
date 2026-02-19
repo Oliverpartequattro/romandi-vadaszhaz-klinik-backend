@@ -12,6 +12,7 @@ import serviceRoutes from "./routes/serviceRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
+import { errorHandler } from './middleware/errorMiddleware.js';
 
 
 
@@ -32,7 +33,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/admin', adminRoutes);
 app.get("/", (req, res) => res.send("A szerver fut!"));
-
+app.use(errorHandler);
 // --- SWAGGER KONFIGURÁCIÓ (MANUÁLIS ÖSSZEFŰZÉS) ---
 
 // 1. Fájlok beolvasása külön-külön

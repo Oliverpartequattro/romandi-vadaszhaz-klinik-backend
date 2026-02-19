@@ -1,60 +1,51 @@
 /**
- * Egyedi hibaosztály a kontrollerekben történő manuális hibaüzenetekhez
+ * 1. AZ ESZKÖZ: Egyedi hibaosztály
+ * Ezt fogod használni a kontrollerekben: throw new ErrorResponse("Üzenet", 400)
  */
 class ErrorResponse extends Error {
-    constructor(message, statusCode) {
+    constructor(message, statusCode, errors = null) {
         super(message);
         this.statusCode = statusCode;
+        this.errors = errors; // Opcionális: több hibaüzenetnek (pl. validációs lista)
     }
 }
 
 /**
- * Globális hibakezelő middleware
+ * 2. A KÖZPONT: Globális hibakezelő middleware
  */
 const errorHandler = (err, req, res, next) => {
-    let error = { ...err };
-    error.message = err.message;
+    // Alapértelmezett értékek (ha valami váratlan hiba történik)
+    let statusCode = err.statusCode || 500;
+    let message = err.message || 'Szerver hiba történt';
+    let errors = err.errors || null;
 
-    // Logolás a szerver konzolra a fejlesztéshez
-    console.error(`❌ HIBA ELKAPVA: ${err.message}`);
-
-    // 1. Mongoose Rossz ID (CastError) - pl. /api/users/123 (ahol az id nem érvényes ObjectId)
-    if (err.name === 'CastError') {
-        const message = `Erőforrás nem található. Érvénytelen azonosító: ${err.value}`;
-        error = new ErrorResponse(message, 404);
-    }
-
-    // 2. Mongoose Duplikált mező (MongoError 11000) - pl. foglalt email cím
-    if (err.code === 11000) {
-        const field = Object.keys(err.keyValue)[0];
-        const message = `A(z) ${field} mező értéke már létezik az adatbázisban!`;
-        error = new ErrorResponse(message, 400);
-    }
-
-    // 3. Mongoose Validációs hiba (ValidationError) - Regex, Required, Enum hiba
+    // --- AUTOMATIKUS MONGOOSE KEZELÉS (hogy ne kelljen kézzel írnod) ---
+    
+    // Validációs hiba (amit a User.js-be írtál required/match/regex)
     if (err.name === 'ValidationError') {
-        // Itt gyűjtjük össze a User modellben megadott egyedi hibaüzeneteket
-        const validationErrors = Object.values(err.errors).map(val => ({
-            field: val.path,
-            message: val.message
-        }));
-        
-        // Itt rögtön visszatérünk a strukturált JSON-nel
-        return res.status(400).json({
-            success: false,
-            message: "Adatbeviteli hiba történt",
-            errors: validationErrors
+        statusCode = 400;
+        message = "Adatbeviteli hiba történt";
+        errors = {};
+        Object.values(err.errors).forEach(val => {
+            errors[val.path] = val.message;
         });
     }
 
-    // Végső válasz összeállítása (vagy az egyedi ErrorResponse-ból, vagy 500-as hiba)
-    res.status(error.statusCode || 500).json({
+    // Duplikált adat (pl. foglalt email)
+    if (err.code === 11000) {
+        statusCode = 400;
+        const field = Object.keys(err.keyValue)[0];
+        message = "Validációs hiba";
+        errors = { [field]: `Ez a(z) ${field} már foglalt!` };
+    }
+
+    // --- VÁLASZ KÜLDÉSE A FRONTENDNEK ---
+    res.status(statusCode).json({
         success: false,
-        message: error.message || 'Szerver hiba történt',
-        // Stack trace (hiba helye) csak fejlesztői módban jelenik meg
+        message: message, // Ez lesz az általános üzenet
+        errors: errors,   // Ez pedig a konkrét mezőkhöz tartozó hiba (ha van)
         stack: process.env.NODE_ENV === 'production' ? null : err.stack
     });
 };
 
-// Exportáljuk mindkettőt: az osztályt a kontrollereknek, a middleware-t a server.js-nek
 export { ErrorResponse, errorHandler };
