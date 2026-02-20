@@ -1,13 +1,13 @@
 import express from "express";
-import User from "../models/User.js"; // A .js kiterjesztés itt kötelező!
+import User from "../models/User.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
-import { sendWelcomeEmail, sendDeleteEmail, sendModifyEmail,} from '../mail/mail.js';
+import { sendWelcomeEmail, sendDeleteEmail, sendModifyEmail } from '../mail/mail.js';
 import { ErrorResponse } from '../middleware/errorMiddleware.js';
 
-
 const router = express.Router();
+
 // JWT token generálása
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -16,268 +16,183 @@ const generateToken = (id) => {
 };
 
 // @desc    1.1 Összes felhasználó lekérése ADMIN ONLY
-// @route   GET /api/users
 router.get("/", protect, admin, async (req, res, next) => {
   try {
-    const dbName = mongoose.connection.name; // Megnézzük melyik DB-ben vagyunk
-    console.log(`Lekérdezés az adatbázisból: ${dbName}`);
-
     const users = await User.find({});
-    console.log(`Talált userek száma: ${users.length}`);
-
     res.json(users);
   } catch (error) {
-    next(new ErrorResponse(error.message, 500));
+    next(error);
   }
 });
 
-// @desc    1.2 Az összes orvos lekérése (Biztonságos verzió)
+// @desc    1.2 Az összes orvos lekérése
 router.get("/doctors", async (req, res, next) => {
   try {
-    // Csak a nevet, a specializációt és az ID-t adjuk vissza
-    // A jelszó, email, telefon, TAJ szám rejtve marad
     const doctors = await User.find({ role: "DOCTOR" })
                               .select("name specialization email phone _id"); 
-    
     res.json(doctors);
   } catch (error) {
-    next(new ErrorResponse("Hiba az orvosok lekérésekor: " + error.message, 500));
+    next(error);
   }
 });
 
-// @desc    1.3 Az összes páciens lekérése (Biztonságos verzió)
+// @desc    1.3 Az összes páciens lekérése
 router.get("/patients", protect, doctorOrAdmin, async (req, res, next) => {
   try {
-    // Pácienseknél MÁG SZIGORÚBB: Csak a nevet és az ID-t adjuk ki
-    // TAJ szám, lakcím, email, telefon SOHA nem mehet ki publikus listában!
-    const patients = await User.find({ role: "PATIENT" })
-                               .select("-password");
-    
+    const patients = await User.find({ role: "PATIENT" }).select("-password");
     res.json(patients);
   } catch (error) {
-    next(new ErrorResponse("Hiba a páciensek lekérésekor: " + error.message, 500));
+    next(error);
   }
 });
 
-
 // @desc    2. Új felhasználó regisztrálása
-// @route   POST /api/users/register
 router.post("/register", async (req, res, next) => {
-  const { name, email, password, phone, tajNumber, address, role, gender } = req.body;
-  console.log(`--- Regisztrációs kísérlet: ${email} (${name}) ---`);
-
   try {
+    const { email } = req.body;
     const userExists = await User.findOne({ email });
 
     if (userExists) {
-      console.warn(`Sikertelen regisztráció: Az email (${email}) már foglalt.`);
-      return res.status(400).json({ message: "Ez a felhasználó már létezik" });
+      // Itt manuálisan dobunk hibát, az objektum szerkezete illeszkedik a kérésedhez
+      return next(new ErrorResponse("Validációs hiba", 400, { email: "Ez az email cím már foglalt." }));
     }
 
     const user = await User.create(req.body);
 
     if (user) {
-      console.log(`Sikeres regisztráció! Új user ID: ${user._id}`);
       sendWelcomeEmail(user.email, user.name);
       res.status(201).json({
+        success: true,
         _id: user._id,
         name: user.name,
         email: user.email,
-        phone: user.phone,
-        tajNumber: user.tajNumber,
-        address: user.address,
-        birthDate: user.birthDate,
-        gender: user.gender,
-        role: user.role,
         token: generateToken(user._id),
       });
     }
   } catch (error) {
-    console.error(`Hiba a regisztráció során (${email}):`, error.message);
-    next(new ErrorResponse("Szerver hiba a regisztráció során: " + error.message, 500));
+    // A Mongoose ValidationError ide fut be, a middleware pedig szétszedi mezőkre
+    next(error);
   }
 });
 
-// @desc    3. Bejelentkezés (Token generálás)
-// @route   POST /api/users/login
+// @desc    3. Bejelentkezés
 router.post("/login", async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    console.log(`--- Bejelentkezési kísérlet: ${email} ${password} ---`);
-
-    // 1. Felhasználó keresése email alapján
     const user = await User.findOne({ email });
 
-    // 2. Felhasználó létezésének és jelszavának ellenőrzése
     if (user && (await user.matchPassword(password))) {
-      console.log(`Sikeres belépés: ${email}`);
       res.json({
+        success: true,
         _id: user._id,
         name: user.name,
         email: user.email,
-        password: user.password,
-        phone: user.phone,
-        tajNumber: user.tajNumber,
-        address: user.address,
-        birthDate: user.birthDate,
-        specialization: user.specialization,
         role: user.role,
-        gender: user.gender,
         token: generateToken(user._id),
       });
     } else {
-      console.warn(
-        `Sikertelen belépés: Rossz email vagy jelszó (${email})`,
-        user,
-      );
-      res.status(401).json({ message: "Érvénytelen email vagy jelszó" });
+      return next(new ErrorResponse("Érvénytelen email vagy jelszó", 401));
     }
   } catch (error) {
-    console.error(`Hiba a login során:`, error.message);
-    next(new ErrorResponse("Szerver hiba a login során: " + error.message, 500));
+    next(error);
   }
 });
 
 // @desc    4. Bejelentkezett felhasználó profilja
-// @route   GET /api/users/profile
 router.get("/profile", protect, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate({
       path: 'records',
-      // EGYETLEN populate-en belül adjuk meg a tömböt az al-adatoknak
       populate: [
         { path: 'doctor', select: 'name specialization email' },
         { path: 'service', select: 'name description' }
       ]
     });
 
-    if (user) {
-      res.json({
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        phone: user.phone,
-        tajNumber: user.tajNumber,
-        address: user.address,
-        role: user.role,
-        gender: user.gender,
-        records: user.records // Most már egyszerre lesz benne a doctor és a service is
-      });
-    } else {
-      res.status(404).json({ message: "Felhasználó nem található" });
+    if (!user) {
+      return next(new ErrorResponse("Felhasználó nem található", 404));
     }
+
+    res.json({
+      success: true,
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      records: user.records
+    });
   } catch (error) {
-    next(new ErrorResponse("Szerver hiba a profil lekérése során: " + error.message, 500));
+    next(error);
   }
 });
 
 // @desc    5. Felhasználói profil frissítése
-// @route   PUT /api/users/profile
 router.put('/profile', protect, async (req, res, next) => {
     try {
         const user = await User.findById(req.user._id);
 
-        if (user) {
-            // 1. Egyszerű mezők frissítése
-            user.name = req.body.name || user.name;
-            user.email = req.body.email || user.email;
-            user.phone = req.body.phone || user.phone;
-            user.address = req.body.address || user.address;
-            user.tajNumber = req.body.tajNumber || user.tajNumber;
-            user.birthDate = req.body.birthDate || user.birthDate;
-            user.gender = req.body.gender || user.gender;
-
-            // 2. JELSZÓ LOGIKA: Csak akkor írjuk felül, ha TÉNYLEG küldtek újat
-            // és az nem csak egy üres szóköz/string.
-            if (req.body.password && req.body.password.trim() !== "") {
-                user.password = req.body.password;
-            }
-
-            const updatedUser = await user.save();
-
-            console.log(`--- Profil frissítve: ${updatedUser.email} ---`);
-            await sendModifyEmail(updatedUser.email, updatedUser.name);
-            res.json({
-                _id: updatedUser._id,
-                name: updatedUser.name,
-                email: updatedUser.email,
-                phone: updatedUser.phone,
-                address: updatedUser.address,
-                birthDate: updatedUser.birthDate,
-                tajNumber: updatedUser.tajNumber,
-                gender: updatedUser.gender,
-                role: updatedUser.role,
-                token: generateToken(updatedUser._id),
-            });
-        } else {
-            res.status(404).json({ message: 'Felhasználó nem található' });
+        if (!user) {
+            return next(new ErrorResponse("Felhasználó nem található", 404));
         }
+
+        // Mezők frissítése
+        const fields = ['name', 'email', 'phone', 'address', 'tajNumber', 'birthDate', 'gender'];
+        fields.forEach(field => {
+            if (req.body[field] !== undefined) user[field] = req.body[field];
+        });
+
+        if (req.body.password && req.body.password.trim() !== "") {
+            user.password = req.body.password;
+        }
+
+        const updatedUser = await user.save();
+        await sendModifyEmail(updatedUser.email, updatedUser.name);
+
+        res.json({
+            success: true,
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            token: generateToken(updatedUser._id),
+        });
     } catch (error) {
-        // 3. OKOSABB HIBAKEZELÉS: Ha validációs hiba van, ne 500-at adjunk
-        if (error.name === 'ValidationError') {
-            return res.status(400).json({ 
-                message: 'Validációs hiba', 
-                error: Object.values(error.errors).map(err => err.message).join(', ') 
-            });
-        }
-        
-        console.error('Hiba a profil frissítésekor:', error.message);
-        next(new ErrorResponse("Szerver hiba a frissítés során: " + error.message, 500));
+        // Itt a Mongoose elvégzi a validációt (pl. TAJ formátum), a middleware pedig visszaadja a kért JSON-t
+        next(error);
     }
 });
 
 // @desc    6. Kijelentkezés
-// @route   POST /api/users/logout
-router.post("/logout", protect, (req, res, next) => {
-    try {
-        console.log(`--- Felhasználó kijelentkezett: ${req.user.email} ---`);
-        
-        res.status(200).json({ message: "Sikeres kijelentkezés." });
-    } catch (error) {
-        next(new ErrorResponse("Hiba a kijelentkezés során: " + error.message, 500));
-    }
+router.post("/logout", protect, (req, res) => {
+    res.status(200).json({ success: true, message: "Sikeres kijelentkezés." });
 });
 
-
-// @desc    7. Felhasználó törlése (Admin vagy Saját maga)
-// @route   DELETE /api/users/:id
+// @desc    7. Felhasználó törlése
 router.delete("/:id", protect, async (req, res, next) => {
   try {
     const userIdToDelete = req.params.id;
     const loggedInUserId = req.user._id.toString();
     const isAdmin = req.user.role === 'ADMIN';
 
-    console.log(`--- Törlési kísérlet: ID ${userIdToDelete} ---`);
-    console.log(`Kezdeményező: ${req.user.email} (Role: ${req.user.role})`);
-
-    // JOGOSULTSÁG ELLENŐRZÉSE: 
-    // Csak akkor engedjük, ha Admin VAGY saját magát akarja törölni
     if (isAdmin || loggedInUserId === userIdToDelete) {
-      
       const user = await User.findById(userIdToDelete);
 
-      if (user) {
-        if (isAdmin && user.role === 'ADMIN' && loggedInUserId !== userIdToDelete) {
-             return res.status(403).json({ message: "Admin nem törölhet másik admint!" });
-        }
-
-        await User.findByIdAndDelete(userIdToDelete);
-        console.log(`Sikeres törlés: ${user.email} eltávolítva.`);
-        sendDeleteEmail(user.email, user.name);
-        res.json({ message: "Felhasználó sikeresen törölve" });
-      } else {
-        next(new ErrorResponse("Felhasználó nem található", 404));
+      if (!user) {
+        return next(new ErrorResponse("Felhasználó nem található", 404));
       }
 
-    } else {
-      // Ha nem admin és nem a saját ID-ja
-      console.warn(`Jogosulatlan törlési kísérlet! ${req.user.email} -> ID: ${userIdToDelete}`);
-      next(new ErrorResponse("Nincs jogosultságod más felhasználót törölni!", 403));
-    }
+      if (isAdmin && user.role === 'ADMIN' && loggedInUserId !== userIdToDelete) {
+        return next(new ErrorResponse("Admin nem törölhet másik admint!", 403));
+      }
 
+      await User.findByIdAndDelete(userIdToDelete);
+      sendDeleteEmail(user.email, user.name);
+      res.json({ success: true, message: "Felhasználó sikeresen törölve" });
+    } else {
+      return next(new ErrorResponse("Nincs jogosultságod a művelethez!", 403));
+    }
   } catch (error) {
-    console.error(`Hiba a törlés során:`, error.message);
-    next(new ErrorResponse("Szerver hiba a törlésnél: " + error.message, 500));
+    next(error);
   }
 });
 
