@@ -63,9 +63,24 @@ router.post("/register", async (req, res, next) => {
       sendWelcomeEmail(user.email, user.name);
       res.status(201).json({
         success: true,
-        _id: user._id,
+       _id: user._id,
+
         name: user.name,
+
         email: user.email,
+
+        phone: user.phone,
+
+        tajNumber: user.tajNumber,
+
+        address: user.address,
+
+        birthDate: user.birthDate,
+
+        gender: user.gender,
+
+        role: user.role,
+
         token: generateToken(user._id),
       });
     }
@@ -84,10 +99,24 @@ router.post("/login", async (req, res, next) => {
     if (user && (await user.matchPassword(password))) {
       res.json({
         success: true,
-        _id: user._id,
+       _id: user._id,
+
         name: user.name,
+
         email: user.email,
+
+        phone: user.phone,
+
+        tajNumber: user.tajNumber,
+
+        address: user.address,
+
+        birthDate: user.birthDate,
+
+        gender: user.gender,
+
         role: user.role,
+
         token: generateToken(user._id),
       });
     } else {
@@ -115,12 +144,27 @@ router.get("/profile", protect, async (req, res, next) => {
 
     res.json({
       success: true,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      records: user.records
+       _id: user._id,
+
+        name: user.name,
+
+        email: user.email,
+
+        phone: user.phone,
+
+        tajNumber: user.tajNumber,
+
+        address: user.address,
+
+        birthDate: user.birthDate,
+
+        gender: user.gender,
+
+        role: user.role,
+
+        records: user.records,
+
+        token: generateToken(user._id),
     });
   } catch (error) {
     next(error);
@@ -151,10 +195,23 @@ router.put('/profile', protect, async (req, res, next) => {
 
         res.json({
             success: true,
-            _id: updatedUser._id,
-            name: updatedUser.name,
-            email: updatedUser.email,
-            token: generateToken(updatedUser._id),
+       _id: updatedUser._id,
+
+        name: updatedUser.name,
+
+        email: updatedUser.email,
+        phone: updatedUser.phone,
+
+        tajNumber: updatedUser.tajNumber,
+
+        address: updatedUser.address,
+
+        birthDate: updatedUser.birthDate,
+
+        gender: updatedUser.gender,
+        role:   updatedUser.role,
+
+        token: generateToken(updatedUser._id),
         });
     } catch (error) {
         // Itt a Mongoose elvégzi a validációt (pl. TAJ formátum), a middleware pedig visszaadja a kért JSON-t
