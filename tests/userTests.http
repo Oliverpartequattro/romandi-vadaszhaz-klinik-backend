@@ -21,7 +21,7 @@ Content-Type: application/json
 
 {
     "name": "Kapocsi Hunor László",
-    "email": "kapocsi.hunor.laszlo@students.jedlik.eu",
+    "email": "kapocsi.hurnor.laszlo@students.jedlik.eu",
     "password": "doktorcigany2",
     "phone": "+36709998877",
     "address": "9024, Győr, Nádor utca 11",

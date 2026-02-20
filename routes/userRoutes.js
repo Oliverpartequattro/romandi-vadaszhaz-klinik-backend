@@ -6,6 +6,7 @@ import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
 import { sendWelcomeEmail, sendDeleteEmail, sendModifyEmail,} from '../mail/mail.js';
 import { ErrorResponse } from '../middleware/errorMiddleware.js';
 
+
 const router = express.Router();
 // JWT token generálása
 const generateToken = (id) => {
@@ -61,7 +62,7 @@ router.get("/patients", protect, doctorOrAdmin, async (req, res) => {
 
 // @desc    2. Új felhasználó regisztrálása
 // @route   POST /api/users/register
-router.post("/register", async (req, res) => {
+router.post("/register", async (req, res, next) => {
   const { name, email, password, phone, tajNumber, address, role, gender } = req.body;
   console.log(`--- Regisztrációs kísérlet: ${email} (${name}) ---`);
 
