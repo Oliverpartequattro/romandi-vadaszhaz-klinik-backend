@@ -17,7 +17,7 @@ const generateToken = (id) => {
 
 // @desc    1.1 Összes felhasználó lekérése ADMIN ONLY
 // @route   GET /api/users
-router.get("/", protect, admin, async (req, res) => {
+router.get("/", protect, admin, async (req, res, next) => {
   try {
     const dbName = mongoose.connection.name; // Megnézzük melyik DB-ben vagyunk
     console.log(`Lekérdezés az adatbázisból: ${dbName}`);
@@ -32,7 +32,7 @@ router.get("/", protect, admin, async (req, res) => {
 });
 
 // @desc    1.2 Az összes orvos lekérése (Biztonságos verzió)
-router.get("/doctors", async (req, res) => {
+router.get("/doctors", async (req, res, next) => {
   try {
     // Csak a nevet, a specializációt és az ID-t adjuk vissza
     // A jelszó, email, telefon, TAJ szám rejtve marad
@@ -46,7 +46,7 @@ router.get("/doctors", async (req, res) => {
 });
 
 // @desc    1.3 Az összes páciens lekérése (Biztonságos verzió)
-router.get("/patients", protect, doctorOrAdmin, async (req, res) => {
+router.get("/patients", protect, doctorOrAdmin, async (req, res, next) => {
   try {
     // Pácienseknél MÁG SZIGORÚBB: Csak a nevet és az ID-t adjuk ki
     // TAJ szám, lakcím, email, telefon SOHA nem mehet ki publikus listában!
@@ -100,7 +100,7 @@ router.post("/register", async (req, res, next) => {
 
 // @desc    3. Bejelentkezés (Token generálás)
 // @route   POST /api/users/login
-router.post("/login", async (req, res) => {
+router.post("/login", async (req, res, next) => {
   try {
     const { email, password } = req.body;
     console.log(`--- Bejelentkezési kísérlet: ${email} ${password} ---`);
@@ -140,7 +140,7 @@ router.post("/login", async (req, res) => {
 
 // @desc    4. Bejelentkezett felhasználó profilja
 // @route   GET /api/users/profile
-router.get("/profile", protect, async (req, res) => {
+router.get("/profile", protect, async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id).populate({
       path: 'records',
@@ -173,7 +173,7 @@ router.get("/profile", protect, async (req, res) => {
 
 // @desc    5. Felhasználói profil frissítése
 // @route   PUT /api/users/profile
-router.put('/profile', protect, async (req, res) => {
+router.put('/profile', protect, async (req, res, next) => {
     try {
         const user = await User.findById(req.user._id);
 
@@ -228,7 +228,7 @@ router.put('/profile', protect, async (req, res) => {
 
 // @desc    6. Kijelentkezés
 // @route   POST /api/users/logout
-router.post("/logout", protect, (req, res) => {
+router.post("/logout", protect, (req, res, next) => {
     try {
         console.log(`--- Felhasználó kijelentkezett: ${req.user.email} ---`);
         
@@ -241,7 +241,7 @@ router.post("/logout", protect, (req, res) => {
 
 // @desc    7. Felhasználó törlése (Admin vagy Saját maga)
 // @route   DELETE /api/users/:id
-router.delete("/:id", protect, async (req, res) => {
+router.delete("/:id", protect, async (req, res, next) => {
   try {
     const userIdToDelete = req.params.id;
     const loggedInUserId = req.user._id.toString();
