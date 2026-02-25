@@ -1,0 +1,124 @@
+@baseUrl = http://localhost:3000/api
+###VERCEL
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+### ---------------------------------------------------------
+### 0. LOGINEK (Változók kinyerése)
+### ---------------------------------------------------------
+
+# @name adminLogin
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "admin@gmail.com",
+    "password": "doktorcigany2"
+}
+
+### Token kinyerése az admin loginhól
+@adminToken = {{adminLogin.response.body.token}}
+
+
+# @name patientLogin
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "paciens@gmail.com",
+    "password": "doktorcigany2"
+}
+
+### Token kinyerése a páciens loginhól
+@patientToken = {{patientLogin.response.body.token}}
+
+
+# @name doctorLogin
+POST {{baseUrl}}/users/login
+Content-Type: application/json
+
+{
+    "email": "doktor@gmail.com",
+    "password": "doktorcigany2"
+}
+
+### Token kinyerése az orvos loginhól
+@doctorToken = {{doctorLogin.response.body.token}}
+
+
+### ---------------------------------------------------------
+### AVAILABILITY (ELÉRHETŐSÉG) TESZTEK
+### ---------------------------------------------------------
+
+### 1. Új rendelési idő hozzáadása (Sikeres - Hétfő)
+POST {{baseUrl}}/availability
+Authorization: Bearer {{doctorToken}}
+Content-Type: application/json
+
+{
+  "dayOfWeek": "Monday",
+  "startTime": "08:00",
+  "endTime": "12:00",
+  "slotDuration": 30
+}
+
+### 2. Új rendelési idő hozzáadása (Sikeres - Szerda)
+POST {{baseUrl}}/availability
+Authorization: Bearer {{doctorToken}}
+Content-Type: application/json
+
+{
+  "dayOfWeek": "Wednesday",
+  "startTime": "14:00",
+  "endTime": "18:00",
+  "slotDuration": 20
+}
+
+### 3. HIBA TESZT: Duplikált nap
+POST {{baseUrl}}/availability
+Authorization: Bearer {{doctorToken}}
+Content-Type: application/json
+
+{
+  "dayOfWeek": "Monday",
+  "startTime": "10:00",
+  "endTime": "14:00"
+}
+
+### 4. HIBA TESZT: Jogosultság (Páciens nem hozhat létre)
+POST {{baseUrl}}/availability
+Authorization: Bearer {{patientToken}}
+Content-Type: application/json
+
+{
+  "dayOfWeek": "Friday",
+  "startTime": "08:00",
+  "endTime": "12:00"
+}
+
+### 5. HIBA TESZT: Hibás idő formátum
+POST {{baseUrl}}/availability
+Authorization: Bearer {{doctorToken}}
+Content-Type: application/json
+
+{
+  "dayOfWeek": "Thursday",
+  "startTime": "reggel 8",
+  "endTime": "16:00"
+}
+
+### 6. Bejelentkezett orvos saját rendelési idejének lekérése
+# @name getMyAvailability
+GET {{baseUrl}}/availability/my
+Authorization: Bearer {{doctorToken}}
+Content-Type: application/json
+
+### 7. Rendelési idő törlése (Automatikus ID kinyeréssel az első elemből)
+@availabilityId = {{getMyAvailability.response.body.data[0]._id}}
+
+DELETE {{baseUrl}}/availability/{{availabilityId}}
+Authorization: Bearer {{doctorToken}}
+Content-Type: application/json
+
+### 8. Profil lekérése (Ellenőrzés)
+GET {{baseUrl}}/users/profile
+Authorization: Bearer {{doctorToken}}
+Content-Type: application/json
