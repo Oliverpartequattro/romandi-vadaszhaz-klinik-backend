@@ -2,10 +2,7 @@ openapi: 3.0.0
 info:
   title: Appointments API
   version: "1.0.0"
-  description: >-
-    Időpontfoglalási végpontok a Klinika rendszeréhez: időpont létrehozása,
-    listázás és módosítás. A példák magyar nyelvűek és a backend üzleti
-    szabályait tükrözik (pl. kezdőidőnek a jövőben kell lennie).
+  description: Appointment management: book, list, update appointments. Contains role-based notes (PATIENT, DOCTOR, ADMIN).
 tags:
   - name: Appointments
     description: Manage appointment bookings and responses
@@ -41,11 +38,10 @@ paths:
             schema:
               $ref: '#/components/schemas/AppointmentCreate'
             example:
-              doctor_id: "698a3e705cf74c640c1f4b1c"
-              patient_id: "65c123abc456def789012345"
-              service_id: "5f8d0d55b54764421b7156c1"
-              startTime: "2026-03-15T09:00:00.000Z"
-              endTime: "2026-03-15T09:30:00.000Z"
+              doctor_id: "65b987def654abc321098765"
+              service_id: "65c456def..."
+              startTime: "2026-03-10T09:00:00Z"
+              endTime: "2026-03-10T09:30:00Z"
               referral_type: "SELF"
       responses:
         '201':
@@ -93,7 +89,7 @@ paths:
             schema:
               $ref: '#/components/schemas/AppointmentUpdate'
             example:
-              startTime: "2026-03-16T10:00:00.000Z"
+              startTime: "2026-03-11T10:00:00Z"
               status: "PROPOSED"
       responses:
         '200':
@@ -179,7 +175,7 @@ components:
             _id: { type: string }
             topic: { type: string }
             location: { type: string }
-            price: { type: string }
+            price: { type: number }
         referred_by:
           nullable: true
           type: object

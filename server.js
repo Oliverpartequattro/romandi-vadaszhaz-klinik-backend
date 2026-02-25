@@ -44,7 +44,6 @@ const userDocs = YAML.load(path.join(__dirname, "./docs/user.swagger.yaml"));
 const recordDocs = YAML.load(path.join(__dirname, "./docs/record.swagger.yaml"));
 const appointmentDocs = YAML.load(path.join(__dirname, "./docs/appointment.swagger.yaml"));
 const serviceDocs = YAML.load(path.join(__dirname, "./docs/service.swagger.yaml"));
-const availabilityDocs = YAML.load(path.join(__dirname, "./docs/availability.swagger.yaml"));
 
 // 2. Swagger beállítások összeállítása
 const swaggerOptions = {
@@ -81,8 +80,7 @@ const swaggerOptions = {
         ...(userDocs.components?.schemas || {}),
         ...(recordDocs.components?.schemas || {}),
         ...(appointmentDocs.components?.schemas || {}),
-        ...(serviceDocs.components?.schemas || {}),
-        ...(availabilityDocs.components?.schemas || {})
+        ...(serviceDocs.components?.schemas || {})
       },
     },
   },

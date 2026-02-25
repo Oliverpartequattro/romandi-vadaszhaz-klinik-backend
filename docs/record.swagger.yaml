@@ -2,9 +2,7 @@ openapi: 3.0.0
 info:
   title: Records API
   version: "1.0.0"
-  description: >-
-    Orvosi dokumentációk (rekordok) kezelése: új leletek létrehozása és páciensek
-    előzményeinek lekérdezése. Példák magyar nyelvűek.
+  description: Endpoints for medical records (creating records, querying patient histories and own records).
 tags:
   - name: Records
     description: Manage patient medical records
@@ -51,24 +49,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecordResponse'
-              example:
-                _id: "6b7c8d9e0f1a2b3c4d5e6f70"
-                patient:
-                  _id: "65a456ghi789jkl012345678"
-                  name: "Kovács Béla"
-                  tajNumber: "123456789"
-                doctor:
-                  _id: "698a3e705cf74c640c1f4b1c"
-                  name: "Dr. Romándi Antal"
-                  specialization: "Kardiológia"
-                appointment_id: "65c123abc456def789012345"
-                service:
-                  _id: "5f8d0d55b54764421b7156c1"
-                  topic: "Szív ultrahang"
-                  location: "102-es vizsgáló"
-                  price: "25000 Ft"
-                description: "Kontroll vizsgálat - panaszmentes, javasolt kontroll 6 hónap múlva."
-                createdAt: "2026-03-15T10:30:00.000Z"
         '400':
           description: Validation error
         '403':
