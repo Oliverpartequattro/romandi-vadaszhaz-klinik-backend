@@ -25,11 +25,13 @@ router.get("/", protect, admin, async (req, res, next) => {
   }
 });
 
-// @desc    1.2 Az összes orvos lekérése
+// @desc    1.2 Az összes orvos lekérése (Most már rendelési idővel!)
 router.get("/doctors", async (req, res, next) => {
   try {
     const doctors = await User.find({ role: "DOCTOR" })
-                              .select("name specialization email phone _id"); 
+      .select("name specialization email phone _id availabilities")
+      .populate("availabilities"); // Így a frontend megkapja a napokat és órákat is
+    
     res.json(doctors);
   } catch (error) {
     next(error);
@@ -130,13 +132,15 @@ router.post("/login", async (req, res, next) => {
 // @desc    4. Bejelentkezett felhasználó profilja
 router.get("/profile", protect, async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).populate({
-      path: 'records',
-      populate: [
-        { path: 'doctor', select: 'name specialization email' },
-        { path: 'service', select: 'name description' }
-      ]
-    });
+    const user = await User.findById(req.user._id)
+      .populate({
+        path: 'records',
+        populate: [
+          { path: 'doctor', select: 'name specialization email' },
+          { path: 'service', select: 'name description' }
+        ]
+      })
+      .populate('availabilities'); // Ha orvos az illető, lássa a saját táblázatát
 
     if (!user) {
       return next(new ErrorResponse("Felhasználó nem található", 404));
@@ -144,27 +148,19 @@ router.get("/profile", protect, async (req, res, next) => {
 
     res.json({
       success: true,
-       _id: user._id,
-
-        name: user.name,
-
-        email: user.email,
-
-        phone: user.phone,
-
-        tajNumber: user.tajNumber,
-
-        address: user.address,
-
-        birthDate: user.birthDate,
-
-        gender: user.gender,
-
-        role: user.role,
-
-        records: user.records,
-
-        token: generateToken(user._id),
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      tajNumber: user.tajNumber,
+      address: user.address,
+      birthDate: user.birthDate,
+      gender: user.gender,
+      role: user.role,
+      specialization: user.specialization, // Orvosnál fontos
+      records: user.records,
+      availabilities: user.availabilities, // Itt lesznek a rendelési idők
+      token: generateToken(user._id),
     });
   } catch (error) {
     next(error);
@@ -180,8 +176,8 @@ router.put('/profile', protect, async (req, res, next) => {
             return next(new ErrorResponse("Felhasználó nem található", 404));
         }
 
-        // Mezők frissítése
-        const fields = ['name', 'email', 'phone', 'address', 'tajNumber', 'birthDate', 'gender'];
+        // Mezők frissítése - kiegészítve a specialization-nel
+        const fields = ['name', 'email', 'phone', 'address', 'tajNumber', 'birthDate', 'gender', 'specialization'];
         fields.forEach(field => {
             if (req.body[field] !== undefined) user[field] = req.body[field];
         });
@@ -195,26 +191,19 @@ router.put('/profile', protect, async (req, res, next) => {
 
         res.json({
             success: true,
-       _id: updatedUser._id,
-
-        name: updatedUser.name,
-
-        email: updatedUser.email,
-        phone: updatedUser.phone,
-
-        tajNumber: updatedUser.tajNumber,
-
-        address: updatedUser.address,
-
-        birthDate: updatedUser.birthDate,
-
-        gender: updatedUser.gender,
-        role:   updatedUser.role,
-
-        token: generateToken(updatedUser._id),
+            _id: updatedUser._id,
+            name: updatedUser.name,
+            email: updatedUser.email,
+            phone: updatedUser.phone,
+            tajNumber: updatedUser.tajNumber,
+            address: updatedUser.address,
+            birthDate: updatedUser.birthDate,
+            gender: updatedUser.gender,
+            role: updatedUser.role,
+            specialization: updatedUser.specialization,
+            token: generateToken(updatedUser._id),
         });
     } catch (error) {
-        // Itt a Mongoose elvégzi a validációt (pl. TAJ formátum), a middleware pedig visszaadja a kért JSON-t
         next(error);
     }
 });
