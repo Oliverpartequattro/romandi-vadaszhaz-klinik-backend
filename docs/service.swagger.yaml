@@ -2,7 +2,10 @@ openapi: 3.0.0
 info:
   title: Services API
   version: "1.0.0"
-  description: Service offerings (procedures, appointments, events) handled by doctors.
+  description: >-
+    Orvosi szolgáltatások (eljárások, vizsgálatok, események) kezelése a Klinika
+    rendszerében. A dokumentáció minden példája magyar nyelvű és a frontend
+    könnyebb integrációját szolgálja.
 tags:
   - name: Services
     description: CRUD for services (create/list and doctor-specific lists)
@@ -65,6 +68,16 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServiceResponse'
+              example:
+                _id: "65c1234567890abc11111111"
+                doctor_id: "698a3e705cf74c640c1f4b1c"
+                topic: "Kardiológia"
+                description: "30 perces konzultáció + EKG"
+                location: "102-es vizsgáló"
+                date: "2026-05-20T10:00:00.000Z"
+                price: "25000 Ft"
+                patient_id: null
+                created_by: "698a3e705cf74c640c1f4b1c"
         '400':
           description: Validation error
         '403':
