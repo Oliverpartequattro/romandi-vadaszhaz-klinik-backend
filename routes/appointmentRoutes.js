@@ -1,6 +1,7 @@
 // routes/appointmentRoutes.js
 import express from 'express';
 import Appointment from '../models/Appointment.js';
+import Availability from '../models/Availability.js'; // Be kell importálni!
 import { protect, admin } from '../middleware/authMiddleware.js';
 import { sendBookEmail } from '../mail/mail.js';
 
@@ -23,13 +24,52 @@ router.get('/', protect, admin, async (req, res) => {
     }
 });
 
-// @desc    2. Új időpont igénylése (Páciens vagy Orvos által)
-// @route   POST /api/appointments
+// @desc    2. Új időpont igénylése
 router.post('/', protect, async (req, res) => {
     try {
         const { doctor_id, service_id, startTime, endTime, referral_type, referred_by } = req.body;
 
-        // Logika: Ki hozza létre?
+        // 1. Dátum objektummá alakítás és a nap kinyerése
+        const requestedDate = new Date(startTime);
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const dayName = days[requestedDate.getDay()];
+
+        // Kinyerjük az időt HH:mm formátumban az összehasonlításhoz
+        const requestedTimeStr = requestedDate.toTimeString().substring(0, 5); 
+
+        // 2. Orvos elérhetőségének ellenőrzése
+        const availability = await Availability.findOne({
+            doctor: doctor_id,
+            dayOfWeek: dayName,
+            isActive: true
+        });
+
+        if (!availability) {
+            return res.status(400).json({ 
+                message: `Az orvos nem rendel ezen a napon (${dayName})` 
+            });
+        }
+
+        // 3. Időintervallum ellenőrzése (startTime >= availability.startTime ÉS < availability.endTime)
+        if (requestedTimeStr < availability.startTime || requestedTimeStr >= availability.endTime) {
+            return res.status(400).json({ 
+                message: `A választott időpont (${requestedTimeStr}) kívül esik az orvos rendelési idején (${availability.startTime} - ${availability.endTime})` 
+            });
+        }
+
+        // 4. Foglaltság ellenőrzése (Ütközés vizsgátlat)
+        const existingAppointment = await Appointment.findOne({
+            doctor_id,
+            startTime: requestedDate,
+            status: { $ne: 'CANCELLED' } // A lemondott időpontok nem számítanak ütközésnek
+        });
+
+        if (existingAppointment) {
+            return res.status(400).json({ message: 'Ez az időpont már foglalt' });
+        }
+
+        // --- HA MINDEN OKÉ, JÖHET A MENTÉS ---
+
         const final_referral_type = req.user.role === 'DOCTOR' ? 'DOCTOR' : (referral_type || 'SELF');
         const final_referred_by = req.user.role === 'DOCTOR' ? req.user._id : referred_by;
 
@@ -38,7 +78,7 @@ router.post('/', protect, async (req, res) => {
             patient_id: req.user.role === 'PATIENT' ? req.user._id : req.body.patient_id,
             service_id,
             startTime,
-            endTime: endTime || null,
+            endTime: endTime || null, // Itt érdemes lenne kiszámolni a slotDuration alapján!
             status: 'PENDING',
             referral_type: final_referral_type,
             referred_by: final_referred_by,
@@ -47,32 +87,23 @@ router.post('/', protect, async (req, res) => {
 
         const savedAppointment = await newAppointment.save();
 
-        // --- POPULÁLÁS: Kikérjük az adatokat az ID-k alapján ---
+        // --- POPULÁLÁS ÉS EMAIL (Változatlan...) ---
         const populatedAppointment = await Appointment.findById(savedAppointment._id)
-            .populate('doctor_id', 'name specialization') // Csak a nevet és szakmát kérjük le
-            .populate('service_id', 'topic location price'); // A téma, helyszín és ár kell nekünk
+            .populate('doctor_id', 'name specialization')
+            .populate('service_id', 'topic location price');
 
-        // Formázzuk a dátumot olvashatóbbra az emailhez (opcionális, de szebb)
         const formattedDate = new Date(populatedAppointment.startTime).toLocaleString('hu-HU', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
         });
 
-        // --- EMAIL KÜLDÉS ---
-        // Most már a populált adatokból vesszük ki a neveket!
-        // Fontos: ne használj await-et, ha nem akarod, hogy a lassú email küldés miatt várjon a felhasználó
         sendBookEmail(
             req.user.email, 
             req.user.name,
-            formattedDate, // A szép dátum
-            populatedAppointment.service_id?.topic || "Általános vizsgálat", // Szolgáltatás neve
-            populatedAppointment.doctor_id?.name || "Klinikai orvos" // Orvos neve
-        ).catch(err => console.error("Email hiba a foglalásnál:", err.message));
+            formattedDate,
+            populatedAppointment.service_id?.topic || "Általános vizsgálat",
+            populatedAppointment.doctor_id?.name || "Klinikai orvos"
+        ).catch(err => console.error("Email hiba:", err.message));
 
-        // A válaszban is a teljes adat megy vissza a frontendnek
         res.status(201).json(populatedAppointment);
 
     } catch (error) {
