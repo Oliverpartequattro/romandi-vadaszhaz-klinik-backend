@@ -21,16 +21,12 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, "Jelszó megadása kötelező"],
-      // Egyedi validátor, hogy PUT-nál ne akadjon el
       validate: {
         validator: function (v) {
-          // Ha nem módosult a jelszó (pl. profil frissítés), hagyjuk jóvá automatikusan
           if (!this.isModified("password")) return true;
-          // Ha módosult, akkor fusson a Regex
           return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(v);
         },
-        message:
-          "A jelszónak legalább 8 karakterből kell állnia, és tartalmaznia kell betűt és számot is",
+        message: "A jelszónak legalább 8 karakterből kell állnia, és tartalmaznia kell betűt és számot is",
       },
     },
     phone: {
@@ -41,43 +37,43 @@ const userSchema = new mongoose.Schema(
         "Érvénytelen magyar telefonszám formátum",
       ],
     },
-// models/User.js
-
-birthDate: { 
-    type: Date, 
-    required: [true, "Születési dátum megadása kötelező"],
-    validate: {
+    birthDate: { 
+      type: Date, 
+      required: [true, "Születési dátum megadása kötelező"],
+      validate: {
         validator: function(value) {
-            // Kiszámoljuk a különbséget évben
-            const today = new Date();
-            const birthDate = new Date(value);
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            
-            // Finomhangolás: ha még nem volt idén születésnapja, levonunk egyet
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
-            }
-
-            // Validáció: Ne lehessen a jövőben ÉS ne legyen idősebb 110 évnél
-            return age >= 0 && age <= 110;
+          const today = new Date();
+          const birthDate = new Date(value);
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const monthDiff = today.getMonth() - birthDate.getMonth();
+          if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          return age >= 0 && age <= 110;
         },
         message: "Érvénytelen születési dátum! A kor nem lehet negatív, és nem haladhatja meg a 110 évet."
-    }
-},      
+      }
+    },      
     role: {
       type: String,
       enum: ["ADMIN", "DOCTOR", "PATIENT"],
       default: "PATIENT",
     },
+    gender: {
+      type: String,
+      required: [true, "A nem megadása kötelező"],
+      enum: {
+        values: ["MALE", "FEMALE"],
+        message: "Kérjük, válasszon nemet (MALE vagy FEMALE)"
+      }
+    },
 
     // --- CSAK PÁCIENS MEZŐK ---
     tajNumber: {
       type: String,
-      required: function () {
+      required: [function () {
         return this.role === "PATIENT";
-      },
-      // Egyedi validátor, hogy PUT-nál ne akadjon el
+      }, "TAJ szám megadása kötelező"],
       validate: {
         validator: function (v) {
           if (!this.isModified("tajNumber")) return true;
@@ -88,9 +84,17 @@ birthDate: {
     },
     address: {
       type: String,
-      required: function () {
+      required: [function () {
         return this.role === "PATIENT";
-      },
+      }, "Lakcím megadása kötelező"],
+      validate: {
+        validator: function(v) {
+          if (this.role !== "PATIENT") return true;
+          // Regex: 4 számjegy irányítószám, szóköz, majd a cím
+          return /^\d{4}\s.{3,}$/.test(v);
+        },
+        message: "Érvénytelen lakcím! Formátum: 1234 Város, Utca házszám"
+      }
     },
     records: [
       {
@@ -98,19 +102,21 @@ birthDate: {
         ref: "Record",
       },
     ],
-    gender: {
-      type: String,
-      enum: ["MALE", "FEMALE"],
-      default: "MALE",
-    },
 
     // --- CSAK ORVOS MEZŐK ---
     specialization: {
       type: String,
-      required: function () {
+      required: [function () {
         return this.role === "DOCTOR";
-      },
+      }, "Specializáció megadása kötelező"],
     },
+    // Itt hivatkozunk az elérhetőségekre
+    availabilities: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Availability",
+      }
+    ],
   },
   {
     timestamps: true,
@@ -120,7 +126,6 @@ birthDate: {
 // Pre-save hook a jelszó titkosításához
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
-
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -129,7 +134,6 @@ userSchema.pre("save", async function () {
   }
 });
 
-// Jelszó ellenőrző metódus
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
