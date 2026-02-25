@@ -1,0 +1,142 @@
+openapi: 3.0.0
+info:
+  title: Availability API
+  version: "1.0.0"
+  description: >-
+    Orvosok rendelkezésre állásának (availability) kezelése. Lehetővé teszi
+    ütemezési idősávok felvételét, listázását és törlését. A példák magyar
+    nyelvűek, és a backend validációit tükrözik (HH:mm formátum, egy nap csak
+    egyszer adható meg ugyanannak az orvosnak).
+tags:
+  - name: Availability
+    description: Create/list/delete availability entries (doctor-owned)
+paths:
+  /api/availability:
+    post:
+      tags: [Availability]
+      summary: Létrehoz egy új availability-t (csak DOCTOR vagy ADMIN)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityCreate'
+            example:
+              doctor: "698a3e705cf74c640c1f4b1c"
+              dayOfWeek: "MONDAY"
+              startTime: "08:30"
+              endTime: "12:00"
+              slotDuration: 30
+      responses:
+        '201':
+          description: Availability létrehozva
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AvailabilityResponse'
+              example:
+                _id: "76a1b2c3d4e5f67890123456"
+                doctor: "698a3e705cf74c640c1f4b1c"
+                dayOfWeek: "MONDAY"
+                startTime: "08:30"
+                endTime: "12:00"
+                slotDuration: 30
+                isActive: true
+        '400':
+          description: Validation error (e.g., invalid time format or duplicate day)
+        '403':
+          description: Forbidden (not a doctor or admin)
+  /api/availability/my:
+    get:
+      tags: [Availability]
+      summary: A bejelentkezett orvos saját availability-jeinek lekérése
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Availability lista a bejelentkezett orvoshoz
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AvailabilityResponse'
+              example:
+                - _id: "76a1b2c3d4e5f67890123456"
+                  doctor: "698a3e705cf74c640c1f4b1c"
+                  dayOfWeek: "MONDAY"
+                  startTime: "08:30"
+                  endTime: "12:00"
+                  slotDuration: 30
+                  isActive: true
+  /api/availability/{id}:
+    delete:
+      tags: [Availability]
+      summary: Törli az availability bejegyzést azonosító alapján
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Törlés sikeres
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+              example:
+                message: "Availability sikeresen törölve"
+        '403':
+          description: Forbidden (nem a tulajdonos)
+        '404':
+          description: Not found
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    AvailabilityCreate:
+      type: object
+      required: [doctor, dayOfWeek, startTime, endTime]
+      properties:
+        doctor: { type: string }
+        dayOfWeek:
+          type: string
+          enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
+        startTime:
+          type: string
+          description: "Kezdő idő HH:mm formátumban"
+          example: "08:30"
+        endTime:
+          type: string
+          description: "Vég idő HH:mm formátumban"
+          example: "12:00"
+        slotDuration:
+          type: integer
+          description: "Percben megadott időtartam (min: 10, default: 30)"
+          example: 30
+    AvailabilityResponse:
+      type: object
+      properties:
+        _id: { type: string }
+        doctor: { type: string }
+        dayOfWeek: { type: string }
+        startTime: { type: string }
+        endTime: { type: string }
+        slotDuration: { type: integer }
+        isActive: { type: boolean }
+    Error:
+      type: object
+      properties:
+        message: { type: string }
+        error: { type: string }
