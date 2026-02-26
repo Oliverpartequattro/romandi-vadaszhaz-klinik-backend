@@ -4,8 +4,7 @@
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OTRhZmZkMWViYTFhNzFhYTY4YjNlNyIsImlhdCI6MTc3MTQ5MTU3NSwiZXhwIjoxNzc0MDgzNTc1fQ.Q9SBwORdmqMhxVusPR80Xr-14jJhK-scXYFyoPAWSFE
-Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OWZmNzZhMGI4YjJiNTUzYzQwMDM2OSIsImlhdCI6MTc3MjEwODI1MCwiZXhwIjoxNzc0NzAwMjUwfQ.raMXwFgP60aqs8sBFxz7V8AjRcrm-rwvCHHu9B32OX8
 ### 1.2 Összes orvos lekérése
 GET {{baseUrl}}/users/doctors
 Content-Type: application/json
