@@ -35,15 +35,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AvailabilityResponse'
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data: { $ref: '#/components/schemas/AvailabilityResponse' }
               example:
-                _id: "76a1b2c3d4e5f67890123456"
-                doctor: "698a3e705cf74c640c1f4b1c"
-                dayOfWeek: "MONDAY"
-                startTime: "08:30"
-                endTime: "12:00"
-                slotDuration: 30
-                isActive: true
+                success: true
+                data:
+                  _id: "76a1b2c3d4e5f67890123456"
+                  doctor: "698a3e705cf74c640c1f4b1c"
+                  dayOfWeek: "MONDAY"
+                  startTime: "08:30"
+                  endTime: "12:00"
+                  slotDuration: 30
+                  isActive: true
         '400':
           description: Validation error (e.g., invalid time format or duplicate day)
         '403':
@@ -60,17 +65,25 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AvailabilityResponse'
+                type: object
+                properties:
+                  success: { type: boolean }
+                  count: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AvailabilityResponse'
               example:
-                - _id: "76a1b2c3d4e5f67890123456"
-                  doctor: "698a3e705cf74c640c1f4b1c"
-                  dayOfWeek: "MONDAY"
-                  startTime: "08:30"
-                  endTime: "12:00"
-                  slotDuration: 30
-                  isActive: true
+                success: true
+                count: 1
+                data:
+                  - _id: "76a1b2c3d4e5f67890123456"
+                    doctor: "698a3e705cf74c640c1f4b1c"
+                    dayOfWeek: "MONDAY"
+                    startTime: "08:30"
+                    endTime: "12:00"
+                    slotDuration: 30
+                    isActive: true
   /api/availability/{id}:
     delete:
       tags: [Availability]
@@ -91,9 +104,11 @@ paths:
               schema:
                 type: object
                 properties:
+                  success: { type: boolean }
                   message: { type: string }
               example:
-                message: "Availability sikeresen törölve"
+                success: true
+                message: "Rendelési idő sikeresen törölve"
         '403':
           description: Forbidden (nem a tulajdonos)
         '404':

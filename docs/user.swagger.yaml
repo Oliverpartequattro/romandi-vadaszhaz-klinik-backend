@@ -16,44 +16,58 @@ paths:
       responses:
         '200':
           description: Array of users
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserPublic'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          description: Admin privileges required
-  /api/users/doctors:
-    get:
-      tags: [Users]
-      summary: Get list of doctors (public)
-      responses:
-        '200':
-          description: Doctors list (limited fields)
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
+          '201':
+            description: User created (returns created user + token)
+            content:
+              application/json:
+                schema:
                   type: object
                   properties:
+                    success: { type: boolean }
                     _id: { type: string }
                     name: { type: string }
-                    specialization: { type: string }
                     email: { type: string }
                     phone: { type: string }
-              example:
-                - _id: "698a3e705cf74c640c1f4b1c"
-                  name: "Dr. Romándi Antal"
-                  specialization: "Kardiológus"
-                  email: "doktor@example.hu"
-                  phone: "+36301112233"
-  /api/users/patients:
-    get:
-      tags: [Users]
+                    role: { type: string }
+                    gender: { type: string }
+                    tajNumber: { type: string }
+                    address: { type: string }
+                    birthDate: { type: string, format: date }
+                    token: { type: string }
+                example:
+                  success: true
+                  _id: "65c123abc456def789012345"
+                  name: "Kovács Béla"
+                  email: "kovacs.bela@pelda.hu"
+                  phone: "+36301234567"
+                  role: "PATIENT"
+                  gender: "MALE"
+                  tajNumber: "123456789"
+                  address: "1051 Budapest, Erzsébet tér 1."
+                  birthDate: "1990-01-01"
+                  token: "eyJhbGciOiJIUzI1NiJ9.KV1f..." # rövidített példa token
+                '200':
+                  description: Successful login (returns user fields + token)
+                  content:
+                    application/json:
+                      schema:
+                        type: object
+                        properties:
+                          success: { type: boolean }
+                          _id: { type: string }
+                          name: { type: string }
+                          email: { type: string }
+                          phone: { type: string }
+                          role: { type: string }
+                          token: { type: string }
+                      example:
+                        success: true
+                        _id: "65c123abc456def789012345"
+                        name: "Páciens Szemethy"
+                        email: "paciens@pelda.hu"
+                        phone: "+36203333333"
+                        role: "PATIENT"
+                        token: "eyJhbGciOiJIUzI1NiJ9.abc123..."
       summary: Get patients (Doctor or Admin)
       security:
         - bearerAuth: []
@@ -182,7 +196,37 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
+                type: object
+                properties:
+                  success: { type: boolean }
+                  _id: { type: string }
+                  name: { type: string }
+                  email: { type: string }
+                  phone: { type: string }
+                  tajNumber: { type: string }
+                  address: { type: string }
+                  birthDate: { type: string, format: date }
+                  gender: { type: string }
+                  role: { type: string }
+                  specialization: { type: string }
+                  records: { type: array, items: { $ref: '#/components/schemas/RecordPopulated' } }
+                  availabilities: { type: array }
+                  token: { type: string }
+              example:
+                success: true
+                _id: "65c123abc456def789012345"
+                name: "Kovács Béla"
+                email: "kovacs.bela@pelda.hu"
+                phone: "+36301234567"
+                tajNumber: "123456789"
+                address: "1051 Budapest, Erzsébet tér 1."
+                birthDate: "1990-01-01"
+                gender: "MALE"
+                role: "PATIENT"
+                specialization: null
+                records: []
+                availabilities: []
+                token: "eyJhbGciOiJIUzI1NiJ9.abc123..."
         '401':
           $ref: '#/components/responses/Unauthorized'
         '404':
@@ -208,7 +252,33 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
+                type: object
+                properties:
+                  success: { type: boolean }
+                  _id: { type: string }
+                  name: { type: string }
+                  email: { type: string }
+                  phone: { type: string }
+                  tajNumber: { type: string }
+                  address: { type: string }
+                  birthDate: { type: string, format: date }
+                  gender: { type: string }
+                  role: { type: string }
+                  specialization: { type: string }
+                  token: { type: string }
+              example:
+                success: true
+                _id: "65c123abc456def789012345"
+                name: "Páciens Frissített"
+                email: "paciens@pelda.hu"
+                phone: "+36709998877"
+                tajNumber: null
+                address: "9022 Győr, Új utca 5."
+                birthDate: "1985-09-10"
+                gender: "FEMALE"
+                role: "PATIENT"
+                specialization: null
+                token: "eyJhbGciOiJIUzI1NiJ9.updated..."
         '400':
           description: Validation error
           content:
@@ -238,8 +308,10 @@ paths:
               schema:
                 type: object
                 properties:
+                  success: { type: boolean }
                   message: { type: string }
               example:
+                success: true
                 message: "Felhasználó sikeresen törölve"
         '403':
           description: Forbidden
