@@ -3,7 +3,9 @@ import dotenv from "dotenv";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from 'url';
-import YAML from 'yamljs'; // Új import a YAML fájlok fix betöltéséhez
+import YAML from 'yamljs';
+import helmet from "helmet"; 
+import { rateLimit } from "express-rate-limit"; 
 import connectDB from "./config/db.js";
 import userRoutes from "./routes/userRoutes.js";
 import recordRoutes from "./routes/recordRoutes.js";
@@ -24,6 +26,28 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// --- BIZTONSÁGI MIDDLEWARE-EK ---
+
+// 1. Helmet: Beállítja a megfelelő biztonsági HTTP fejléceket (XSS védelem, stb.)
+app.use(helmet({
+    contentSecurityPolicy: false, // Swagger UI miatt ki kell kapcsolni vagy konfigurálni
+}));
+
+// 2. Rate Limit: Megakadályozza a brute-force támadásokat és a túlterhelést
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 perc
+    max: 100, // IP-nként maximum 100 kérés a megadott időablakban
+    message: {
+        message: "Túl sok kérés érkezett erről az IP címről, kérjük próbálja meg később (15 perc múlva)."
+    },
+    standardHeaders: true, // Visszaküldi a RateLimit-Limit fejlécet
+    legacyHeaders: false, // Kikapcsolja a régi X-RateLimit-* fejléceket
+});
+
+// Alkalmazzuk a limitert minden API hívásra
+app.use("/api", limiter);
+
 app.use(cors());
 app.use(express.json());
 
