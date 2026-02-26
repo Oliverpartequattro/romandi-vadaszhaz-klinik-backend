@@ -56,6 +56,7 @@ router.post('/seed', async (req, res) => {
                 password: "doktorcigany2",
                 phone: "06301111111",
                 birthDate: new Date("1985-05-10"),
+                gender: "MALE",
                 role: "ADMIN"
             },
             {
@@ -93,7 +94,7 @@ router.post('/seed', async (req, res) => {
                 name: "Páciens Szemethy",
                 email: "paciens@gmail.com",
                 password: "doktorcigany2",
-                phone: "062039185238",
+                phone: "06203918523",
                 birthDate: new Date("1992-03-15"),
                 role: "PATIENT",
                 gender: "MALE",
@@ -149,7 +150,7 @@ router.post('/seed', async (req, res) => {
                 doctor_id: doctor1._id,
                 topic: "Végbél szűrés",
                 description: "Végbél szűrés, amely során egy egyszerű vizsgálattal ellenőrizzük a végbélnyílás és a környező terület állapotát, hogy időben felismerjük a rendellenességeket vagy a rákos elváltozásokat. Ez a szűrés különösen fontos azok számára, akiknek családjában előfordult végbélrák, vagy akiknek már voltak végbélproblémáik.",
-                location: "B épület, B8-as szoba",
+                location: "B épület, B14-as szoba",
                 price: "25000 Ft",
                 created_by: admin._id
             },
@@ -157,7 +158,7 @@ router.post('/seed', async (req, res) => {
                 doctor_id: doctor2._id,
                 topic: "Lábvizsgálat",
                 description: "Teljes körű lábvizsgálat, beleértve a vérkeringés és idegek állapotának ellenőrzését. Ez a vizsgálat különösen fontos cukorbetegek számára, akik hajlamosak a lábproblémákra, valamint azoknak, akiknek már voltak lábproblémáik, hogy megelőzzék a további komplikációkat.",
-                location: "B épület, 101-es szoba",
+                location: "A épület, 101-es szoba",
                 price: "500 Ft",
                 created_by: admin._id
             },
@@ -165,7 +166,7 @@ router.post('/seed', async (req, res) => {
                 doctor_id: doctor2._id,
                 topic: "Lábnyomásmérés",
                 description: "Lábnyomásmérés, amely során egy speciális eszközzel (nyelv) megmérjük a lábak vérnyomását. Ez segít az érrendszeri problémák, például a perifériás artériás betegség felismerésében, amely gyakran előfordulhat cukorbetegeknél és időseknél.",
-                location: "B épület, 101-es szoba",
+                location: "C épület, 404-es szoba",
                 price: "2500 Ft",
                 created_by: admin._id
             },
@@ -173,7 +174,7 @@ router.post('/seed', async (req, res) => {
                 doctor_id: doctor3._id,
                 topic: "Végbélrák szűrés",
                 description: "Végbélrák szűrés, amely magában foglalja a végbél és a környező szövetek alapos vizsgálatát, hogy időben felismerjük a rákos elváltozásokat vagy azok előjeleit.",
-                location: "B épület, 102-es szoba",
+                location: "A épület, 32-es szoba",
                 price: "35000 Ft",
                 created_by: admin._id
             },
@@ -181,7 +182,7 @@ router.post('/seed', async (req, res) => {
                 doctor_id: doctor3._id,
                 topic: "Végbélrák nagyműtét",
                 description: "Végbélrák nagyműtét, amely során a rákos szöveteket eltávolítjuk a testből. Ez a műtét különösen fontos, ha a rák korai stádiumban van.",
-                location: "B épület, 102-es szoba",
+                location: "B épület, B6-os szoba",
                 price: "150000 Ft",
                 created_by: admin._id
             }
@@ -193,7 +194,7 @@ router.post('/seed', async (req, res) => {
         // 3. Teszt Időpont (Appointment)
         // A startTime-nak jövőbelinek kell lennie a validátorod miatt!
         const appointment = await Appointment.create({
-            doctor_id: doctor._id,
+            doctor_id: doctor1._id,
             patient_id: patient._id,
             service_id: createdServices[0]._id,
             startTime: new Date(Date.now() + 172800000), // 2 nap múlva (megegyezik a szervizzel)
@@ -206,7 +207,7 @@ router.post('/seed', async (req, res) => {
         // 4. Teszt Ellátási Rekord (Record)
         const record = await Record.create({
             patient: patient._id,
-            doctor: doctor._id,
+            doctor: doctor1._id,
             appointment_id: appointment._id,
             service: createdServices[0]._id,
             description: "Végbélrák."

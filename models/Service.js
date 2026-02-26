@@ -21,7 +21,6 @@ const serviceSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      required: [true, "Kezdő időpont kötelező"],
     },
     price: {
       type: String,
