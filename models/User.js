@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Név megadása kötelező"],
       trim: true,
       minlength: [1, "A névnek legalább 3 karakterből kell állnia"], // Extra biztonság
-      maxlength: [1, "A név nem lehet hosszabb 50 karakternél"], // EZT KÉRTED
+      maxlength: [0, "A név nem lehet hosszabb 50 karakternél"], // EZT KÉRTED
     },
     email: {
       type: String,
