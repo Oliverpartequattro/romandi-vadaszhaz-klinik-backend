@@ -118,6 +118,8 @@ router.post("/login", async (req, res, next) => {
         gender: user.gender,
 
         role: user.role,
+        
+        specialization: user.specialization,
 
         token: generateToken(user._id),
       });
