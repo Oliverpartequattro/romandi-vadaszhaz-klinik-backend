@@ -1,6 +1,7 @@
 import express from 'express';
 import Record from '../models/Record.js';
 import User from '../models/User.js';
+import { generateRecordPDF } from '../pdfGenerator/pdfGenerator.js';
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -143,6 +144,31 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
             message: "Hiba a rekord mentésekor", 
             error: error.message 
         });
+    }
+});
+
+// @desc    PDF Lelet generálása és letöltése
+// @route   GET /api/records/:id/pdf
+router.get('/:id/pdf', async (req, res) => {
+    try {
+        const record = await Record.findById(req.params.id)
+            .populate('patient', 'name email tajNumber')
+            .populate('doctor', 'name specialization')
+            .populate('service', 'topic');
+
+        if (!record) {
+            return res.status(404).json({ message: "Lelet nem található" });
+        }
+
+        // Fejlécek beállítása a letöltéshez
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=lelet_${record._id}.pdf`);
+
+        // Generálás indítása
+        generateRecordPDF(res, record);
+
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a PDF generálása közben", error: error.message });
     }
 });
 
