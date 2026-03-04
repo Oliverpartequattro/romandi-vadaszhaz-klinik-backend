@@ -10,7 +10,7 @@ const availabilitySchema = new mongoose.Schema({
     type: String,
     required: [true, "A nap megadása kötelező"],
     enum: {
-      values: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      values: ['Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat', 'Vasárnap'],
       message: "Érvénytelen nap: {VALUE}"
     }
   },
