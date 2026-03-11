@@ -13,4 +13,4 @@ Content-Type: application/json
 
 ### 3. Admin Statisztikák lekérése
 GET {{baseUrl}}/admin/stats
-Content-Type: application/json
+Content-Type: application/jsonv b

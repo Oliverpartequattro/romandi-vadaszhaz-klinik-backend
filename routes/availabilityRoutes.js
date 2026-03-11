@@ -3,7 +3,22 @@ import Availability from "../models/Availability.js";
 import User from "../models/User.js";
 import { protect, doctorOrAdmin } from "../middleware/authMiddleware.js";
 import { ErrorResponse } from "../middleware/errorMiddleware.js";
+// Segédfüggvény a napok lefordításához
+const translateDayToHungarian = (dateInput) => {
+  // Ha a frontend csak egy stringet küld (pl. "Monday"), azt is kezeljük, 
+  // de ha egy teljes dátumot (ISO string), akkor a getDay() a biztos.
+  const days = [
+    "Vasárnap", "Hétfő", "Kedd", "Szerda", "Csütörtök", "Péntek", "Szombat"
+  ];
+  
+  const date = new Date(dateInput);
+  
+  // Ha érvénytelen a dátum (mert pl. eleve "Hétfő" string jött), 
+  // akkor adjuk vissza az eredeti értéket
+  if (isNaN(date.getTime())) return dateInput; 
 
+  return days[date.getDay()];
+};
 const router = express.Router();
 
 // @desc    1. Új rendelési idő hozzáadása
@@ -11,8 +26,11 @@ const router = express.Router();
 // @access  Private (Orvos vagy Admin)
 router.post("/", protect, doctorOrAdmin, async (req, res, next) => {
   try {
-    const { dayOfWeek, startTime, endTime, slotDuration } = req.body;
+    let { dayOfWeek, startTime, endTime, slotDuration } = req.body;
     const doctorId = req.user._id;
+
+    // --- JAVÍTÁS: Fordítás magyarra ---
+    dayOfWeek = translateDayToHungarian(dayOfWeek);
 
     // Ellenőrizzük, van-e már beállítva rendelési idő erre a napra
     const existingAvailability = await Availability.findOne({
@@ -24,7 +42,7 @@ router.post("/", protect, doctorOrAdmin, async (req, res, next) => {
       return next(new ErrorResponse(`${dayOfWeek} napra már van beállított rendelési időd!`, 400));
     }
 
-    // 1. Létrehozzuk az új elérhetőséget
+    // Létrehozás (már a magyar névvel)
     const availability = await Availability.create({
       doctor: doctorId,
       dayOfWeek,
@@ -33,15 +51,12 @@ router.post("/", protect, doctorOrAdmin, async (req, res, next) => {
       slotDuration,
     });
 
-    // 2. Beletesszük az orvos (User) availabilities tömbjébe is a referenciát
+    // ... (User frissítése változatlan)
     await User.findByIdAndUpdate(doctorId, {
       $push: { availabilities: availability._id },
     });
 
-    res.status(201).json({
-      success: true,
-      data: availability,
-    });
+    res.status(201).json({ success: true, data: availability });
   } catch (error) {
     next(error);
   }
