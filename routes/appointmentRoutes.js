@@ -31,7 +31,7 @@ router.post('/', protect, async (req, res) => {
 
         // 1. Dátum objektummá alakítás és a nap kinyerése
         const requestedDate = new Date(startTime);
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const days = ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'];
         const dayName = days[requestedDate.getDay()];
 
         // Kinyerjük az időt HH:mm formátumban az összehasonlításhoz
