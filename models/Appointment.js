@@ -28,7 +28,7 @@ const appointmentSchema = new mongoose.Schema({
         }
     },
     status: { type: String,
-        enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'PROPOSED', 'CANCELLED'], 
+        enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'PROPOSED', 'CANCELLED', 'COMPLETED'], 
         default: 'PENDING' },
     
     // Új mezők a beutalóhoz
