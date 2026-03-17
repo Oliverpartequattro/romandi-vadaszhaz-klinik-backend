@@ -3,6 +3,8 @@ import bcrypt from "bcryptjs";
 
 const userSchema = new mongoose.Schema(
   {
+    resetPasswordCode: String,
+    resetPasswordExpires: Date,
   name: {
       type: String,
       required: [true, "Név megadása kötelező"],
