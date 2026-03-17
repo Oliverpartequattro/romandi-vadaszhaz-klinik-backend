@@ -1,21 +1,31 @@
 openapi: 3.0.0
 info:
-  title: Appointments API
-  version: "1.0.0"
-  description: Appointment management: book, list, update appointments. Contains role-based notes (PATIENT, DOCTOR, ADMIN).
+  title: Romándi Vadászház Klinik - Időpontkezelő API
+  version: "1.1.0"
+  description: |
+    Ez az API modul felelős az időpontfoglalások teljes életciklusának kezeléséért.
+    Tartalmazza az elérhetőség ellenőrzést, a státuszkezelést és a szerepkör alapú jogosultságokat.
+    
+    **Szerepkörök és jogok:**
+    - **PATIENT (Páciens):** Saját időpontot foglalhat, lemondhat (CANCELLED), vagy elfogadhat orvosi ajánlatot (CONFIRMED).
+    - **DOCTOR (Orvos):** Saját naptárát látja, módosíthat időpontokat (státusz ekkor PROPOSED lesz), vagy visszautasíthat kéréseket.
+    - **ADMIN:** Minden időpontot lát és módosíthat korlátozás nélkül.
+
 tags:
   - name: Appointments
-    description: Manage appointment bookings and responses
+    description: Időpontfoglalások létrehozása, lekérdezése és módosítása
+
 paths:
   /api/appointments:
     get:
       tags: [Appointments]
-      summary: Get all appointments (Admin only)
+      summary: Összes klinikán lévő időpont lekérése
+      description: Kizárólag Adminisztrátorok számára érhető el. Visszaadja a klinika összes foglalását időrendi sorrendben.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Array of appointments (populated)
+          description: Sikeres lekérdezés.
           content:
             application/json:
               schema:
@@ -25,10 +35,17 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/Forbidden'
+          description: Nincs adminisztrátori jogosultság.
+
     post:
       tags: [Appointments]
-      summary: Create a new appointment (Patient or Doctor)
+      summary: Új időpontfoglalás létrehozása
+      description: |
+        Páciensek és orvosok is használhatják. 
+        A szerver automatikusan ellenőrzi:
+        1. Az orvos rendel-e az adott napon (Availability).
+        2. A kért időpont beleesik-e a rendelési időbe.
+        3. Nincs-e már másik foglalt időpont abban a sávban.
       security:
         - bearerAuth: []
       requestBody:
@@ -39,48 +56,54 @@ paths:
               $ref: '#/components/schemas/AppointmentCreate'
             example:
               doctor_id: "65b987def654abc321098765"
-              service_id: "65c456def..."
-              startTime: "2026-03-10T09:00:00Z"
-              endTime: "2026-03-10T09:30:00Z"
+              service_id: "65c456def888abc111222333"
+              startTime: "2026-03-25T10:00:00.000Z"
               referral_type: "SELF"
       responses:
         '201':
-          description: Appointment created (populated)
+          description: Időpont sikeresen rögzítve. A rendszer visszaigazoló emailt küld.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentFullResponse'
         '400':
-          description: Validation error (e.g., past startTime)
+          description: Validációs hiba (pl. múltbeli időpont, orvos nem rendel, vagy már foglalt a hely).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /api/appointments/my:
     get:
       tags: [Appointments]
-      summary: Get appointments for the authenticated user (patient or doctor)
+      summary: Bejelentkezett felhasználó saját időpontjai
+      description: Páciensnél a saját foglalásai, orvosnál a hozzá érkező páciensek listája jelenik meg.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Appointments related to the authenticated user
+          description: A felhasználóhoz kapcsolódó időpontok listája.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/AppointmentFullResponse'
+
   /api/appointments/{id}:
     put:
       tags: [Appointments]
-      summary: Update an appointment (doctor, patient or admin with rules)
+      summary: Időpont módosítása vagy válaszadás
       description: |
-        Rules implemented in server logic:
-        - Doctors/Admin changing start/end time cause status => PROPOSED.
-        - Patients can only set CONFIRMED or CANCELLED (except Admin overrides).
+        - Ha az **Orvos** módosítja az időpontot (startTime/endTime), a státusz automatikusan `PROPOSED` lesz.
+        - A **Páciens** csak `CONFIRMED` (elfogadás) vagy `CANCELLED` (lemondás) státuszt állíthat be.
       security:
         - bearerAuth: []
       parameters:
         - in: path
           name: id
           required: true
+          description: Az időpont egyedi MongoDB azonosítója
           schema:
             type: string
       requestBody:
@@ -89,54 +112,69 @@ paths:
             schema:
               $ref: '#/components/schemas/AppointmentUpdate'
             example:
-              startTime: "2026-03-11T10:00:00Z"
-              status: "PROPOSED"
+              status: "CANCELLED"
       responses:
         '200':
-          description: Updated appointment (populated)
+          description: Sikeres frissítés.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AppointmentFullResponse'
         '403':
-          description: Forbidden (not owner or forbidden transition)
+          description: Nincs jogosultság a módosításhoz (nem saját időpont vagy tiltott státuszátmenet).
         '404':
-          description: Appointment not found
+          description: Az időpont nem található.
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+  
   responses:
     Unauthorized:
-      description: Missing or invalid token
+      description: Hiányzó vagy érvénytelen token.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
-    Forbidden:
-      description: Insufficient permissions
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+
   schemas:
     AppointmentCreate:
       type: object
       required: [doctor_id, service_id, startTime]
       properties:
-        doctor_id: { type: string }
+        doctor_id: 
+          type: string
+          example: "65b987def654abc321098765"
         patient_id:
           type: string
-          description: Only required when a doctor/admin creates on behalf of a patient
-        service_id: { type: string }
-        startTime: { type: string, format: date-time }
-        endTime: { type: string, format: date-time, nullable: true }
+          description: Csak orvosi/adminisztrátori rögzítés esetén kötelező.
+          example: "65a123abc456def789012345"
+        service_id:
+          type: string
+          example: "65c456def888abc111222333"
+        startTime:
+          type: string
+          format: date-time
+          description: ISO 8601 formátumú kezdési idő. Nem lehet a múltban.
+          example: "2026-03-25T10:00:00.000Z"
+        endTime:
+          type: string
+          format: date-time
+          nullable: true
+          description: Befejezés ideje. Ha üres, a backend a szolgáltatás hossza alapján számolhatja.
         referral_type:
           type: string
           enum: [SELF, DOCTOR]
-        referred_by: { type: string, nullable: true }
+          default: SELF
+          description: Önmaga jelentkezett, vagy orvosi beutalóval érkezik.
+        referred_by:
+          type: string
+          nullable: true
+          description: Beutaló orvos azonosítója (ha a típus DOCTOR).
+
     AppointmentUpdate:
       type: object
       properties:
@@ -144,50 +182,44 @@ components:
         endTime: { type: string, format: date-time }
         status:
           type: string
-          description: "Status transitions are enforced by server logic"
-          enum: [PENDING, ACCEPTED, REJECTED, PROPOSED, CONFIRMED, CANCELLED]
+          enum: [PENDING, ACCEPTED, REJECTED, PROPOSED, CONFIRMED, CANCELLED, COMPLETED]
+          description: "Státuszváltási szabályok érvényesek!"
         service_id: { type: string }
+
     AppointmentFullResponse:
       type: object
       properties:
-        _id: { type: string }
-        status: { type: string }
-        startTime: { type: string, format: date-time }
-        endTime: { type: string, format: date-time, nullable: true }
-        referral_type: { type: string }
+        _id: { type: string, example: "65d1234567890abcdef12345" }
+        status: { type: string, example: "PENDING" }
+        startTime: { type: string, format: date-time, example: "2026-03-25T10:00:00.000Z" }
+        endTime: { type: string, format: date-time, example: "2026-03-25T10:30:00.000Z" }
+        referral_type: { type: string, example: "SELF" }
         doctor_id:
           type: object
           properties:
             _id: { type: string }
-            name: { type: string }
-            specialization: { type: string }
-            phone: { type: string }
+            name: { type: string, example: "Dr. Kovács János" }
+            specialization: { type: string, example: "Kardiológus" }
         patient_id:
           type: object
           properties:
             _id: { type: string }
-            name: { type: string }
-            email: { type: string }
-            phone: { type: string }
+            name: { type: string, example: "Teszt Páciens" }
+            email: { type: string, example: "paciens@gmail.com" }
+            phone: { type: string, example: "+36301234567" }
         service_id:
           type: object
           properties:
             _id: { type: string }
-            topic: { type: string }
-            location: { type: string }
-            price: { type: number }
-        referred_by:
-          nullable: true
-          type: object
-          properties:
-            _id: { type: string }
-            name: { type: string }
-            specialization: { type: string }
-        created_by: { type: string }
+            topic: { type: string, example: "Szívultrahang vizsgálat" }
+            location: { type: string, example: "1. emelet 12. ajtó" }
+            price: { type: number, example: 25000 }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+
     Error:
       type: object
       properties:
-        message: { type: string }
-        error: { type: string }
+        success: { type: boolean, example: false }
+        message: { type: string, example: "Ez az időpont már foglalt" }
+        error: { type: string, example: "ConflictError" }
