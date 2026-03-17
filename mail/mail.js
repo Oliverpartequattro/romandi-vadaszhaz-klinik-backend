@@ -1,6 +1,4 @@
 import nodemailer from "nodemailer";
-import dotenv from "dotenv";
-dotenv.config()// Segédfüggvény a transporter létrehozásához (hogy ne ismételjük a kódot)
 const getTransporter = () => {
     if (!process.env.EMAIL_PASS) {
         console.error("❌ VÉGZETES HIBA: Az EMAIL_PASS környezeti változó nem található!");
@@ -14,9 +12,8 @@ const getTransporter = () => {
         },
     });
 };
-console.log(process.env.EMAIL_PASS);
 /**
- * 1. ÜDVÖZLŐ EMAIL (Regisztrációkor)
+ * 1. ÜDVÖZLŐ EMAIL (Regisztarációkor)
  */
 export const sendWelcomeEmail = async (to, userName) => {
     const transporter = getTransporter();
@@ -203,11 +200,13 @@ export const sendDoctorResponseEmail = async (to, userName, service, doctor) => 
  * 6. JELSZÓ VISSZAÁLLÍTÁSI KÓD
  */
 
-export const sendResetCodeEmail = async (email, code) => {
+export const sendResetCodeEmail = async (to, code,) => {
     const transporter = getTransporter();
+    if (!transporter) return false;
+
     const mailOptions = {
         from: '"Romándi Vadászház Klinik" <romandi.klinik@gmail.com>',
-        to: email,
+        to,
         subject: "Jelszó visszaállítási kód",
         html: `
             <h1>Jelszó visszaállítás</h1>
@@ -216,7 +215,8 @@ export const sendResetCodeEmail = async (email, code) => {
             <p>Ez a kód 10 percig érvényes.</p>
         `
     };
-        try {
+
+    try {
         await transporter.sendMail(mailOptions);
         console.log("✅ Orvosi válasz email elküldve");
         return true;
