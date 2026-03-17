@@ -244,4 +244,50 @@ router.delete("/:id", protect, async (req, res, next) => {
   }
 });
 
+router.post('/forgot-password', async (req, res) => {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) return res.status(404).json({ message: "Nincs ilyen felhasználó!" });
+
+    // 6 jegyű véletlen kód generálása
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    
+    user.resetPasswordCode = resetCode;
+    user.resetPasswordExpires = Date.now() + 10 * 60 * 1000; // 10 percig érvényes
+    await user.save();
+
+    // Email küldése (használd a már meglévő mail.js-edet)
+    const { sendResetCodeEmail } = await import('../mail/mail.js');
+    try {
+        await sendResetCodeEmail(user.email, resetCode);
+        res.json({ message: "A kód elküldve az email címedre!" });
+    } catch (err) {
+        res.status(500).json({ message: "Email küldési hiba" });
+    }
+});
+
+router.post('/reset-password', async (req, res) => {
+    const { email, code, newPassword } = req.body;
+
+    const user = await User.findOne({
+        email,
+        resetPasswordCode: code,
+        resetPasswordExpires: { $gt: Date.now() } // Ellenőrizzük, hogy nem járt-e le
+    });
+
+    if (!user) {
+        return res.status(400).json({ message: "Érvénytelen vagy lejárt kód!" });
+    }
+
+    // Új jelszó beállítása (a pre-save hook titkosítani fogja!)
+    user.password = newPassword;
+    user.resetPasswordCode = undefined; // Töröljük a használt kódot
+    user.resetPasswordExpires = undefined;
+    
+    await user.save();
+
+    res.json({ message: "Jelszó sikeresen megváltoztatva!" });
+});
+
 export default router;
