@@ -1,48 +1,41 @@
 openapi: 3.0.0
 info:
-  title: Services API
-  version: "1.0.0"
-  description: Service offerings (procedures, appointments, events) handled by doctors.
+  title: Romándi Vadászház Klinik - Szolgáltatások API
+  version: "1.1.0"
+  description: |
+    Ez a modul kezeli a klinikán elérhető orvosi szolgáltatásokat, beavatkozásokat és speciális időpontokat.
+    
+    **Szabályok:**
+    - **Lekérdezés:** Bárki (bejelentkezés nélkül is) megtekintheti a szolgáltatások listáját.
+    - **Létrehozás:** - Az **Orvos** csak saját magához (`doctor_id`) rendelhet új szolgáltatást.
+      - Az **Admin** bárki nevében létrehozhat szolgáltatást.
+    - A `patient_id` alapértelmezés szerint `null`, amíg valaki le nem foglalja az adott szolgáltatást.
 tags:
   - name: Services
-    description: CRUD for services (create/list and doctor-specific lists)
+    description: Szolgáltatások és orvosi tevékenységek kezelése
+
 paths:
   /api/services:
     get:
       tags: [Services]
-      summary: List all services
+      summary: Összes elérhető szolgáltatás listázása
+      description: Visszaadja a klinika összes rögzített szolgáltatását, név szerint növekvő sorrendbe rendezve.
       responses:
         '200':
-          description: Array of service entries
+          description: Sikeres lekérdezés.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/ServiceResponse'
-              example:
-                - _id: "65c1234567890abc11111111"
-                  doctor_id: "698a3e705cf74c640c1f4b1c"
-                  topic: "Kardiológia"
-                  description: "Szívultrahangos alapvizsgálat"
-                  location: "204-es vizsgáló"
-                  date: "2026-05-20T10:00:00.000Z"
-                  price: "25000 Ft"
-                  patient_id: null
-                  created_by: "698a3e705cf74c640c1f4b1c"
-                - _id: "65c1234567890abc22222222"
-                  doctor_id: "698a3e705cf74c640c1f4b1c"
-                  topic: "Kisműtét"
-                  description: "Katéterezés"
-                  location: "Műtő 1"
-                  date: "2026-05-21T08:30:00.000Z"
-                  price: "1 lélek"
-                  patient_id: null
-                  created_by: "698a3e705cf74c640c1f4b1c"
 
     post:
       tags: [Services]
-      summary: Create a new service (Doctor for own, Admin for any)
+      summary: Új szolgáltatás/esemény létrehozása
+      description: |
+        Létrehoz egy új orvosi tevékenységet. 
+        A `created_by` mezőt a rendszer automatikusan a bejelentkezett felhasználó ID-jával tölti ki.
       security:
         - bearerAuth: []
       requestBody:
@@ -54,34 +47,37 @@ paths:
             example:
               doctor_id: "698a3e705cf74c640c1f4b1c"
               topic: "Kardiológia"
-              description: "30 perces konzultáció + EKG"
-              location: "102-es vizsgáló"
+              description: "Szívultrahang és terheléses EKG"
+              location: "204-es vizsgáló"
               date: "2026-05-20T10:00:00.000Z"
-              price: "25000 Ft"
+              price: "35000 Ft"
       responses:
         '201':
-          description: Created service
+          description: Szolgáltatás sikeresen létrehozva.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ServiceResponse'
-        '400':
-          description: Validation error
         '403':
-          description: Forbidden (doctor creating for different doctor)
+          description: Tiltott művelet (ha egy orvos más orvos nevében próbál menteni).
+        '400':
+          description: Validációs hiba (hiányzó kötelező mező).
+
   /api/services/{doctorId}:
     get:
       tags: [Services]
-      summary: Get services for a specific doctor
+      summary: Egy adott orvos összes szolgáltatásának lekérése
+      description: Listázza az összes szolgáltatást, amely a megadott orvoshoz van rendelve, dátum szerint növekvő sorrendben.
       parameters:
         - in: path
           name: doctorId
           required: true
           schema:
             type: string
+          description: Az orvos (User) egyedi azonosítója.
       responses:
         '200':
-          description: Services for the given doctor
+          description: Az orvoshoz tartozó szolgáltatások listája.
           content:
             application/json:
               schema:
@@ -89,39 +85,59 @@ paths:
                 items:
                   $ref: '#/components/schemas/ServiceResponse'
         '404':
-          description: No services found for that doctor
+          description: Ehhez az orvoshoz nem tartoznak szolgáltatások.
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
   schemas:
     ServiceCreateRequest:
       type: object
-      required: [doctor_id, topic, description, location, date, price]
+      required: [doctor_id, topic, description, location, price]
       properties:
-        doctor_id: { type: string }
-        topic: { type: string }
-        description: { type: string }
-        location: { type: string }
-        date: { type: string, format: date-time }
-        price: { type: string }
-        patient_id: { type: string, nullable: true }
+        doctor_id:
+          type: string
+          description: Az orvos ID-ja, aki a szolgáltatást végzi.
+        topic:
+          type: string
+          example: "Kardiológia"
+        description:
+          type: string
+          example: "Komplex szűrővizsgálat"
+        location:
+          type: string
+          example: "102-es vizsgáló"
+        date:
+          type: string
+          format: date-time
+          description: Opcionális időpont az eseményhez.
+        price:
+          type: string
+          example: "25000 Ft"
+        patient_id:
+          type: string
+          nullable: true
+          description: Ha a szolgáltatás már foglalt, itt szerepel a páciens ID-ja.
+
     ServiceResponse:
       type: object
       properties:
-        _id: { type: string }
-        doctor_id: { type: string }
-        topic: { type: string }
-        description: { type: string }
-        location: { type: string }
+        _id: { type: string, example: "65c1234567890abc11111111" }
+        doctor_id: { type: string, example: "698a3e705cf74c640c1f4b1c" }
+        topic: { type: string, example: "Kardiológia" }
+        description: { type: string, example: "Szívultrahangos alapvizsgálat" }
+        location: { type: string, example: "204-es vizsgáló" }
         date: { type: string, format: date-time }
-        price: { type: string }
+        price: { type: string, example: "25000 Ft" }
         patient_id: { type: string, nullable: true }
-        created_by: { type: string }
+        created_by: { type: string, description: "A rekordot létrehozó felhasználó ID-ja" }
         createdAt: { type: string, format: date-time }
         updatedAt: { type: string, format: date-time }
+
     Error:
       type: object
       properties:
