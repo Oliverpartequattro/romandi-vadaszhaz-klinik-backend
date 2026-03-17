@@ -197,3 +197,22 @@ export const sendDoctorResponseEmail = async (to, userName, service, doctor) => 
         return false;
     }
 };
+
+/**
+ * 6. JELSZÓ VISSZAÁLLÍTÁSI KÓD
+ */
+
+export const sendResetCodeEmail = async (email, code) => {
+    const mailOptions = {
+        from: '"Klinika Rendszer" <noreply@klinika.hu>',
+        to: email,
+        subject: "Jelszó visszaállítási kód",
+        html: `
+            <h1>Jelszó visszaállítás</h1>
+            <p>A jelszó módosításához szükséges 6 jegyű kódod:</p>
+            <h2 style="letter-spacing: 5px; color: #2c3e50;">${code}</h2>
+            <p>Ez a kód 10 percig érvényes.</p>
+        `
+    };
+    return transporter.sendMail(mailOptions);
+};
