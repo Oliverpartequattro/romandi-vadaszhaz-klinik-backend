@@ -203,6 +203,7 @@ export const sendDoctorResponseEmail = async (to, userName, service, doctor) => 
  */
 
 export const sendResetCodeEmail = async (email, code) => {
+    const transporter = getTransporter();
     const mailOptions = {
         from: '"Klinika Rendszer" <noreply@klinika.hu>',
         to: email,
@@ -214,5 +215,5 @@ export const sendResetCodeEmail = async (email, code) => {
             <p>Ez a kód 10 percig érvényes.</p>
         `
     };
-    return transporter.sendMail(mailOptions);
+    return await transporter.sendMail(mailOptions);
 };

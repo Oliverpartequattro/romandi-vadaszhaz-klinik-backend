@@ -66,3 +66,4 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5ODljMjZmN
 ### 7. Felhasználó törlése ID alapján (Admin vagy Saját maga)
 DELETE {{baseUrl}}/users/698f4331ea9679d8780c6241
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5OGVlNWQxODQzNjA1Mjk5MTgyNWIxYyIsImlhdCI6MTc3MDk5NTU3MywiZXhwIjoxNzczNTg3NTczfQ.eouIIS11fw7N03qoW_0pnV9oylE4Wr8xx-SddYItpjQ
+

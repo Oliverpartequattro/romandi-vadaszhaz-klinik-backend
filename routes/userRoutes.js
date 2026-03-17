@@ -3,7 +3,7 @@ import User from "../models/User.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
-import { sendWelcomeEmail, sendDeleteEmail, sendModifyEmail } from '../mail/mail.js';
+import { sendWelcomeEmail, sendDeleteEmail, sendModifyEmail, sendResetCodeEmail } from '../mail/mail.js';
 import { ErrorResponse } from '../middleware/errorMiddleware.js';
 
 const router = express.Router();
@@ -258,13 +258,7 @@ router.post('/forgot-password', async (req, res) => {
     await user.save();
 
     // Email küldése (használd a már meglévő mail.js-edet)
-    const { sendResetCodeEmail } = await import('../mail/mail.js');
-    try {
-        await sendResetCodeEmail(user.email, resetCode);
-        res.json({ message: "A kód elküldve az email címedre!" });
-    } catch (err) {
-        res.status(500).json({ message: "Email küldési hiba" });
-    }
+    sendResetCodeEmail(user.email, user.name, resetCode);
 });
 
 router.post('/reset-password', async (req, res) => {
