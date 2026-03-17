@@ -1,34 +1,48 @@
 openapi: 3.0.0
 info:
-  title: Records API
-  version: "1.0.0"
-  description: Endpoints for medical records (creating records, querying patient histories and own records).
+  title: Romándi Vadászház Klinik - Orvosi Leletek API
+  version: "1.1.0"
+  description: |
+    Ez a modul kezeli a páciensek egészségügyi dokumentációit (leleteit). 
+    A leletek tartalmazzák a diagnózist, a beavatkozás leírását, és az elvégzett szolgáltatás adatait.
+    
+    **Jogosultsági szintek:**
+    - **PATIENT (Páciens):** Csak a saját leleteit láthatja és töltheti le PDF-ben.
+    - **DOCTOR (Orvos):** Bármely páciens kórtörténetét megtekintheti, és új leletet állíthat ki.
+    - **ADMIN:** Teljes hozzáférés az összes lelethez.
 tags:
   - name: Records
-    description: Manage patient medical records
+    description: Orvosi dokumentációk kezelése és PDF generálás
+
 paths:
   /api/records:
     get:
       tags: [Records]
-      summary: Get all records (Admin only)
+      summary: Az összes klinikai rekord lekérése
+      description: Kizárólag **ADMIN** számára elérhető lista az összes valaha kiállított leletről.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Array of records (populated)
+          description: Sikeres lekérdezés.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/RecordResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
         '403':
-          description: Admin only
+          description: Csak adminisztrátorok kérhetik le az összes rekordot.
+
     post:
       tags: [Records]
-      summary: Create a new record (Doctor or Admin)
+      summary: Új orvosi lelet létrehozása
+      description: |
+        Csak **DOCTOR** vagy **ADMIN** hívhatja meg. 
+        A mentés során a rendszer:
+        1. Ellenőrzi a páciens létezését.
+        2. Hozzárendeli a leletet a páciens profiljához (`records` tömb frissítése).
+        3. Automatikus értesítő emailt küld a páciensnek.
       security:
         - bearerAuth: []
       requestBody:
@@ -40,24 +54,23 @@ paths:
             example:
               patient: "65a456ghi789jkl012345678"
               appointment_id: "65c123abc456def789012345"
-              service: "65c456def..."
-              description: "Kontroll vizsgálat - panaszmentes, javasolt kontroll 6 hónap múlva."
+              service: "65c456def888abc111222333"
+              description: "A páciensnél fizikai vizsgálat során kóros elváltozás nem tapasztalható. Javasolt a bőséges folyadékbevitel."
       responses:
         '201':
-          description: Created record (populated)
+          description: Lelet sikeresen elmentve és email kiküldve.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RecordResponse'
-        '400':
-          description: Validation error
-        '403':
-          description: Only doctors or admins may create records
+        '404':
+          description: A megadott páciens ID nem található.
+
   /api/records/patient/{patientId}:
     get:
       tags: [Records]
-      summary: Get all records for a patient
-      description: Doctors and Admins may view any patient; a patient may view only their own history.
+      summary: Egy adott páciens teljes kórtörténete
+      description: Orvosok és Adminok bárkit lekérdezhetnek, Páciens csak a saját ID-jával férhet hozzá.
       security:
         - bearerAuth: []
       parameters:
@@ -66,9 +79,10 @@ paths:
           required: true
           schema:
             type: string
+          description: A páciens egyedi azonosítója.
       responses:
         '200':
-          description: Patient records array
+          description: Időrendben (friss legelöl) rendezett leletek.
           content:
             application/json:
               schema:
@@ -76,37 +90,55 @@ paths:
                 items:
                   $ref: '#/components/schemas/RecordResponse'
         '403':
-          description: Forbidden (no access to other's records)
-        '404':
-          description: Patient not found
+          description: Nincs jogosultságod más páciens kórtörténetét megtekinteni!
+
   /api/records/my:
     get:
       tags: [Records]
-      summary: Get own records (patient or doctor)
+      summary: Saját rekordok lekérése
+      description: Páciensnél a saját leletei, orvosnál az általa kiállított leletek listája.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Array of records relevant to the authenticated user
+          description: A felhasználó szerepkörének megfelelő rekordlista.
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/RecordResponse'
+
+  /api/records/{id}/pdf:
+    get:
+      tags: [Records]
+      summary: Lelet letöltése PDF formátumban
+      description: Generál egy hivatalos PDF dokumentumot a lelet adataiból (név, TAJ, diagnózis).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: A rekord (lelet) azonosítója.
+      responses:
+        '200':
+          description: A generált PDF fájl.
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: Lelet nem található.
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  responses:
-    Unauthorized:
-      description: Missing or invalid token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+
   schemas:
     RecordCreate:
       type: object
@@ -114,41 +146,44 @@ components:
       properties:
         patient:
           type: string
-          description: Patient MongoDB ID
+          description: A páciens MongoDB azonosítója.
         appointment_id:
           type: string
-          description: Optional appointment ID to link the record
+          description: Opcionális hivatkozás az időpontfoglalásra.
         service:
           type: string
-          description: Service ID
+          description: Az elvégzett szolgáltatás/vizsgálat azonosítója.
         description:
           type: string
+          description: Az orvosi szakvélemény, diagnózis vagy lelet szövege.
+
     RecordResponse:
       type: object
       properties:
-        _id: { type: string }
+        _id: { type: string, example: "65e1234567890abcdef12345" }
+        description: { type: string, example: "Kontroll vizsgálat - panaszmentes." }
+        createdAt: { type: string, format: date-time, example: "2026-03-17T14:00:00Z" }
         patient:
           type: object
           properties:
             _id: { type: string }
-            name: { type: string }
-            tajNumber: { type: string }
+            name: { type: string, example: "Kovács Béla" }
+            email: { type: string, example: "bela@example.com" }
+            tajNumber: { type: string, example: "123-456-789" }
         doctor:
           type: object
           properties:
             _id: { type: string }
-            name: { type: string }
-            specialization: { type: string }
-        appointment_id: { type: string }
+            name: { type: string, example: "Dr. Romándi Antal" }
+            specialization: { type: string, example: "Sebész" }
         service:
           type: object
           properties:
             _id: { type: string }
-            topic: { type: string }
-            location: { type: string }
-            price: { type: string }
-        description: { type: string }
-        createdAt: { type: string, format: date-time }
+            topic: { type: string, example: "Általános sebészeti konzultáció" }
+            location: { type: string, example: "Sebészeti szakrendelő - 2. ajtó" }
+        appointment_id: { type: string, nullable: true }
+
     Error:
       type: object
       properties:
