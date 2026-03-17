@@ -1,0 +1,52 @@
+### Változók beállítása (Cseréld ki valós tokenekre a teszteléshez)
+@baseUrl = http://localhost:3000/api
+@adminToken = Bearer YOUR_ADMIN_TOKEN_HERE
+@doctorToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTdmOTg4OTIwZGUzM2FhYzFjY2RhMSIsImlhdCI6MTc3Mzc2ODcwNCwiZXhwIjoxNzc2MzYwNzA0fQ.7ErZTVzIYsLosHXIYvFe7z7cPRv6aiONtsQkdL5VVxA
+@patientToken = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5YTdmOTg4OTIwZGUzM2FhYzFjY2RhNCIsImlhdCI6MTc3Mzc2ODY4OSwiZXhwIjoxNzc2MzYwNjg5fQ.OOaCWqxNBs0JBm7OKzL-x_WoFHx7hFVFdT8xO8qEh74
+
+############################################################
+# 1. ADMIN STATISZTIKA LEKÉRÉSE
+# Elvárás: Teljes rendszer áttekintés (Összes user, napi vizit)
+############################################################
+GET {{baseUrl}}/users/stats/me
+Authorization: {{adminToken}}
+Content-Type: application/json
+
+###
+
+############################################################
+# 2. ORVOSI STATISZTIKA LEKÉRÉSE
+# Elvárás: Saját teljesítmény (Egyedi páciensek, lezárt kezelések)
+############################################################
+GET {{baseUrl}}/users/stats/me
+Authorization: {{doctorToken}}
+Content-Type: application/json
+
+###
+
+############################################################
+# 3. PÁCIENS STATISZTIKA LEKÉRÉSE
+# Elvárás: Személyes adatok (Leletek száma, költés összege)
+############################################################
+GET {{baseUrl}}/users/stats/me
+Authorization: {{patientToken}}
+Content-Type: application/json
+
+###
+
+############################################################
+# 4. HIBAKEZELÉS TESZTELÉSE (Nincs Token)
+# Elvárás: 401 Unauthorized
+############################################################
+GET {{baseUrl}}/users/stats/me
+Content-Type: application/json
+
+###
+
+############################################################
+# 5. HIBAKEZELÉS TESZTELÉSE (Hibás Token)
+# Elvárás: 401 vagy 403 Forbidden
+############################################################
+GET {{baseUrl}}/users/stats/me
+Authorization: Bearer hibas_token_123
+Content-Type: application/json

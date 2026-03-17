@@ -1,5 +1,9 @@
 import express from "express";
 import User from "../models/User.js";
+import Appointment from "../models/Appointment.js";
+import Availability from "../models/Availability.js";
+import Record from "../models/Record.js";
+import Service from "../models/Service.js";
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import { protect, admin, doctorOrAdmin } from '../middleware/authMiddleware.js';
@@ -282,6 +286,61 @@ router.post('/reset-password', async (req, res) => {
     await user.save();
 
     res.json({ message: "Jelszó sikeresen megváltoztatva!" });
+});
+
+// @desc    Személyre szabott statisztikák (Admin, Orvos, Páciens)
+// @route   GET /api/users/stats/me
+// @access  Private
+router.get('/stats/me', protect, async (req, res, next) => {
+    try {
+        const userId = req.user._id;
+        const role = req.user.role;
+        let personalStats = {};
+
+        if (role === 'ADMIN') {
+            // A korábbi globális admin statisztika jön ide
+            const [totalUsers, appointmentsToday] = await Promise.all([
+                User.countDocuments(),
+                Appointment.countDocuments({ startTime: { $gte: new Date().setHours(0,0,0,0) } })
+            ]);
+            personalStats = { totalUsers, appointmentsToday, type: 'System Overview' };
+
+        } else if (role === 'DOCTOR') {
+            // Orvosi statisztika: Saját páciensek és lezárt vizitek
+            const [myPatients, completedAppointments] = await Promise.all([
+                Appointment.distinct('patient_id', { doctor_id: userId }),
+                Appointment.countDocuments({ doctor_id: userId, status: 'COMPLETED' })
+            ]);
+            personalStats = { 
+                uniquePatients: myPatients.length, 
+                totalTreatments: completedAppointments,
+                type: 'Medical Performance' 
+            };
+
+        } else if (role === 'PATIENT') {
+            // Páciens statisztika: Saját leletek és elköltött összeg (becsült)
+            const [myRecords, myAppointments] = await Promise.all([
+                User.findById(userId).select('records'),
+                Appointment.find({ patient_id: userId, status: 'COMPLETED' }).populate('service_id')
+            ]);
+            
+            const moneySpent = myAppointments.reduce((sum, app) => {
+                const price = parseInt(app.service_id?.price?.replace(/[^0-9]/g, '')) || 0;
+                return sum + price;
+            }, 0);
+
+            personalStats = { 
+                totalRecords: myRecords.records.length, 
+                estimatedHealthInvestment: moneySpent,
+                currency: "Ft",
+                type: 'Personal Health Summary' 
+            };
+        }
+
+        res.status(200).json({ success: true, stats: personalStats });
+    } catch (error) {
+        next(new ErrorResponse("Statisztika hiba", 500));
+    }
 });
 
 export default router;
