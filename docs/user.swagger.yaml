@@ -1,239 +1,75 @@
 openapi: 3.0.0
 info:
-  title: Users API
-  version: "1.0.0"
-  description: User-related endpoints for the Klinik system (registration, login, profile and user management).
+  title: Romándi Vadászház Klinik - Felhasználók API
+  version: "1.1.0"
+  description: |
+    Felhasználókezelés, hitelesítés és jogosultságkezelés. 
+    A rendszer három szerepkört támogat: `PATIENT` (alapértelmezett), `DOCTOR`, `ADMIN`.
 tags:
   - name: Users
-    description: Endpoints for user registration, authentication and management
+    description: Regisztráció, bejelentkezés és profil műveletek
+
 paths:
-  /api/users:
-    get:
-      tags: [Users]
-      summary: Get all users (Admin only)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Array of users
-          '201':
-            description: User created (returns created user + token)
-            content:
-              application/json:
-                schema:
-                  type: object
-                  properties:
-                    success: { type: boolean }
-                    _id: { type: string }
-                    name: { type: string }
-                    email: { type: string }
-                    phone: { type: string }
-                    role: { type: string }
-                    gender: { type: string }
-                    tajNumber: { type: string }
-                    address: { type: string }
-                    birthDate: { type: string, format: date }
-                    token: { type: string }
-                example:
-                  success: true
-                  _id: "65c123abc456def789012345"
-                  name: "Kovács Béla"
-                  email: "kovacs.bela@pelda.hu"
-                  phone: "+36301234567"
-                  role: "PATIENT"
-                  gender: "MALE"
-                  tajNumber: "123456789"
-                  address: "1051 Budapest, Erzsébet tér 1."
-                  birthDate: "1990-01-01"
-                  token: "eyJhbGciOiJIUzI1NiJ9.KV1f..." # rövidített példa token
-                '200':
-                  description: Successful login (returns user fields + token)
-                  content:
-                    application/json:
-                      schema:
-                        type: object
-                        properties:
-                          success: { type: boolean }
-                          _id: { type: string }
-                          name: { type: string }
-                          email: { type: string }
-                          phone: { type: string }
-                          role: { type: string }
-                          token: { type: string }
-                      example:
-                        success: true
-                        _id: "65c123abc456def789012345"
-                        name: "Páciens Szemethy"
-                        email: "paciens@pelda.hu"
-                        phone: "+36203333333"
-                        role: "PATIENT"
-                        token: "eyJhbGciOiJIUzI1NiJ9.abc123..."
-      summary: Get patients (Doctor or Admin)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Patients list (safe fields)
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/UserPatientPublic'
-        '403':
-          description: Only doctors or admins allowed
   /api/users/register:
     post:
       tags: [Users]
-      summary: Register a new user
+      summary: Új felhasználó regisztrálása
+      description: |
+        Létrehoz egy új felhasználót. 
+        - Páciens esetén kötelező: `tajNumber`, `address`.
+        - Orvos esetén kötelező: `specialization`.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UserRegister'
-            example:
-              name: "Kovács Béla"
-              email: "kovacs.bela@example.hu"
-              password: "Password123"
-              phone: "+36301234567"
-              birthDate: "1990-01-01"
-              role: "PATIENT"
-              gender: "MALE"
-              tajNumber: "123456789"
-              address: "1051 Budapest, Erzsébet tér 1."
       responses:
         '201':
-          description: User created (returns created user + token)
+          description: Sikeres regisztráció.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/UserPublic'
-                  - type: object
-                    properties:
-                      token: { type: string }
-              example:
-                _id: "65c123abc456def789012345"
-                name: "Kovács Béla"
-                email: "kovacs.bela@example.hu"
-                phone: "+36301234567"
-                role: "PATIENT"
-                gender: "MALE"
-                tajNumber: "123456789"
-                address: "1051 Budapest, Erzsébet tér 1."
-                birthDate: "1990-01-01"
-                token: "eyJhbGciOiJIUzI1Ni..."
+                $ref: '#/components/schemas/UserAuthResponse'
         '400':
-          description: Validation error or user exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Validációs hiba (pl. foglalt email, gyenge jelszó vagy érvénytelen telefonszám).
+
   /api/users/login:
     post:
       tags: [Users]
-      summary: User login
+      summary: Bejelentkezés
       requestBody:
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/UserLogin'
-            example:
-              email: "paciens@gmail.com"
-              password: "doktorcigany2"
       responses:
         '200':
-          description: Successful login (returns user fields + token)
+          description: Sikeres bejelentkezés.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/UserPublic'
-                  - type: object
-                    properties:
-                      token: { type: string }
-              example:
-                _id: "65c123abc456def789012345"
-                name: "Páciens Szemethy"
-                email: "paciens@gmail.com"
-                phone: "+36203333333"
-                role: "PATIENT"
-                token: "eyJhbGciOiJIUzI1Ni..."
+                $ref: '#/components/schemas/UserAuthResponse'
         '401':
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-  /api/users/logout:
-    post:
-      tags: [Users]
-      summary: Logout (acknowledge token invalidation client-side)
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Logout succeeded
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message: { type: string }
-              example:
-                message: "Sikeres kijelentkezés."
+          description: Érvénytelen hitelesítési adatok.
+
   /api/users/profile:
     get:
       tags: [Users]
-      summary: Get current user profile (populated records)
+      summary: Bejelentkezett felhasználó saját profilja
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: User profile including populated records
+          description: Részletes profiladatok (pácienseknél leletekkel, orvosoknál rendelési idővel).
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  success: { type: boolean }
-                  _id: { type: string }
-                  name: { type: string }
-                  email: { type: string }
-                  phone: { type: string }
-                  tajNumber: { type: string }
-                  address: { type: string }
-                  birthDate: { type: string, format: date }
-                  gender: { type: string }
-                  role: { type: string }
-                  specialization: { type: string }
-                  records: { type: array, items: { $ref: '#/components/schemas/RecordPopulated' } }
-                  availabilities: { type: array }
-                  token: { type: string }
-              example:
-                success: true
-                _id: "65c123abc456def789012345"
-                name: "Kovács Béla"
-                email: "kovacs.bela@pelda.hu"
-                phone: "+36301234567"
-                tajNumber: "123456789"
-                address: "1051 Budapest, Erzsébet tér 1."
-                birthDate: "1990-01-01"
-                gender: "MALE"
-                role: "PATIENT"
-                specialization: null
-                records: []
-                availabilities: []
-                token: "eyJhbGciOiJIUzI1NiJ9.abc123..."
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: '#/components/schemas/UserProfileResponse'
     put:
       tags: [Users]
-      summary: Update own profile
+      summary: Saját profil frissítése
       security:
         - bearerAuth: []
       requestBody:
@@ -242,184 +78,113 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdate'
-            example:
-              name: "Páciens Frissített"
-              phone: "+36709998877"
-              address: "9022 Győr, Új utca 5."
       responses:
         '200':
-          description: Updated user with new token
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success: { type: boolean }
-                  _id: { type: string }
-                  name: { type: string }
-                  email: { type: string }
-                  phone: { type: string }
-                  tajNumber: { type: string }
-                  address: { type: string }
-                  birthDate: { type: string, format: date }
-                  gender: { type: string }
-                  role: { type: string }
-                  specialization: { type: string }
-                  token: { type: string }
-              example:
-                success: true
-                _id: "65c123abc456def789012345"
-                name: "Páciens Frissített"
-                email: "paciens@pelda.hu"
-                phone: "+36709998877"
-                tajNumber: null
-                address: "9022 Győr, Új utca 5."
-                birthDate: "1985-09-10"
-                gender: "FEMALE"
-                role: "PATIENT"
-                specialization: null
-                token: "eyJhbGciOiJIUzI1NiJ9.updated..."
-        '400':
-          description: Validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-  /api/users/{id}:
-    delete:
+          description: Profil sikeresen frissítve.
+
+  /api/users/doctors:
+    get:
       tags: [Users]
-      summary: Delete a user (admin or self)
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-          example: "6989c26f47278217e6676824"
+      summary: Orvosok listájának lekérése
+      description: Publikus lista az orvosokról, szakterületükről és rendelési idejükről.
       responses:
         '200':
-          description: User deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success: { type: boolean }
-                  message: { type: string }
-              example:
-                success: true
-                message: "Felhasználó sikeresen törölve"
-        '403':
-          description: Forbidden
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          $ref: '#/components/responses/NotFound'
+          description: Orvosok listája.
+
+  /api/users/forgot-password:
+    post:
+      tags: [Users]
+      summary: Elfelejtett jelszó kód kérése
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+      responses:
+        '200':
+          description: A 6 jegyű kód kiküldve emailben.
+
+  /api/users/reset-password:
+    post:
+      tags: [Users]
+      summary: Jelszó visszaállítása kóddal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, code, newPassword]
+              properties:
+                email: { type: string }
+                code: { type: string, description: "6 jegyű kód" }
+                newPassword: { type: string }
+      responses:
+        '200':
+          description: Jelszó sikeresen megváltoztatva.
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
-  responses:
-    Unauthorized:
-      description: Missing or invalid token
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
-    NotFound:
-      description: Resource not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Error'
+
   schemas:
-    UserPublic:
-      type: object
-      properties:
-        _id: { type: string }
-        name: { type: string }
-        email: { type: string }
-        phone: { type: string }
-        role: { type: string, enum: [ADMIN, DOCTOR, PATIENT] }
-        gender: { type: string }
-        specialization: { type: string, nullable: true }
-        tajNumber: { type: string, nullable: true }
-        address: { type: string, nullable: true }
-        birthDate: { type: string, format: date }
-    UserPatientPublic:
-      type: object
-      properties:
-        _id: { type: string }
-        name: { type: string }
-        role: { type: string }
     UserRegister:
       type: object
-      required: [name, email, password, phone]
+      required: [name, email, password, phone, birthDate, gender]
       properties:
+        name: { type: string, minLength: 3, maxLength: 50 }
+        email: { type: string, format: email }
+        password: { type: string, pattern: '^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$' }
+        phone: { type: string, example: "+36301234567" }
+        birthDate: { type: string, format: date }
+        gender: { type: string, enum: [MALE, FEMALE] }
+        role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT }
+        tajNumber: { type: string, description: "Pácienseknél kötelező (9 számjegy)" }
+        address: { type: string, description: "Pácienseknél kötelező (Irányítószám Város, Utca)" }
+        specialization: { type: string, description: "Orvosoknál kötelező" }
+
+    UserAuthResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        _id: { type: string }
         name: { type: string }
         email: { type: string }
-        password: { type: string }
+        role: { type: string }
+        token: { type: string }
+
+    UserProfileResponse:
+      allOf:
+        - $ref: '#/components/schemas/UserAuthResponse'
+        - type: object
+          properties:
+            phone: { type: string }
+            tajNumber: { type: string, nullable: true }
+            address: { type: string, nullable: true }
+            birthDate: { type: string, format: date }
+            gender: { type: string }
+            specialization: { type: string, nullable: true }
+            records: { type: array, items: { type: object } }
+            availabilities: { type: array, items: { type: object } }
+
+    UserUpdate:
+      type: object
+      properties:
+        name: { type: string }
         phone: { type: string }
-        birthDate: { type: string, format: date }
-        role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT }
-        gender: { type: string, enum: [MALE, FEMALE] }
-        specialization: { type: string }
-        tajNumber: { type: string }
         address: { type: string }
+        password: { type: string }
+        specialization: { type: string }
+
     UserLogin:
       type: object
       required: [email, password]
       properties:
         email: { type: string }
         password: { type: string }
-    UserUpdate:
-      type: object
-      properties:
-        name: { type: string }
-        email: { type: string }
-        password: { type: string }
-        phone: { type: string }
-        address: { type: string }
-        birthDate: { type: string, format: date }
-        tajNumber: { type: string }
-        gender: { type: string }
-    UserProfile:
-      allOf:
-        - $ref: '#/components/schemas/UserPublic'
-        - type: object
-          properties:
-            records:
-              type: array
-              items:
-                $ref: '#/components/schemas/RecordPopulated'
-    RecordPopulated:
-      type: object
-      properties:
-        _id: { type: string }
-        description: { type: string }
-        doctor:
-          type: object
-          properties:
-            _id: { type: string }
-            name: { type: string }
-            specialization: { type: string }
-        service:
-          type: object
-          properties:
-            _id: { type: string }
-            topic: { type: string }
-            location: { type: string }
-        createdAt: { type: string, format: date-time }
-    Error:
-      type: object
-      properties:
-        message: { type: string }
-        error: { type: string }
