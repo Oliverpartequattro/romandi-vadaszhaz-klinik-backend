@@ -1,20 +1,28 @@
 openapi: 3.0.0
 info:
-  title: Availability API
-  version: "1.0.0"
-  description: >-
-    Orvosok rendelkezésre állásának (availability) kezelése. Lehetővé teszi
-    ütemezési idősávok felvételét, listázását és törlését. A példák magyar
-    nyelvűek, és a backend validációit tükrözik (HH:mm formátum, egy nap csak
-    egyszer adható meg ugyanannak az orvosnak).
+  title: Romándi Vadászház Klinik - Orvosi Elérhetőség API
+  version: "1.1.0"
+  description: |
+    Ez a modul az orvosok heti rendelési idejének kezeléséért felel. 
+    Segítségével beállítható, hogy az orvos mely napokon, mettől meddig fogad pácienseket, 
+    és milyen hosszú egy alapértelmezett vizsgálat (slotDuration).
+    
+    **Fontos szabályok:**
+    - Egy orvosnak egy adott napra (pl. Hétfő) csak **egy** bejegyzése lehet (Unique Index).
+    - Az időpontokat `HH:mm` formátumban kell megadni.
+    - A napok neveit a rendszer automatikusan magyarosítja (pl. "MONDAY" -> "Hétfő").
 tags:
   - name: Availability
-    description: Create/list/delete availability entries (doctor-owned)
+    description: Orvosi rendelési idők kezelése (Létrehozás, Lekérés, Törlés)
+
 paths:
   /api/availability:
     post:
       tags: [Availability]
-      summary: Létrehoz egy új availability-t (csak DOCTOR vagy ADMIN)
+      summary: Új rendelési idő rögzítése
+      description: |
+        Csak **DOCTOR** vagy **ADMIN** szerepkörrel hívható.
+        Létrehoz egy idősávot az orvos számára. A rendszer ellenőrzi, hogy ne legyen duplikáció az adott napra.
       security:
         - bearerAuth: []
       requestBody:
@@ -24,70 +32,59 @@ paths:
             schema:
               $ref: '#/components/schemas/AvailabilityCreate'
             example:
-              doctor: "698a3e705cf74c640c1f4b1c"
-              dayOfWeek: "MONDAY"
-              startTime: "08:30"
-              endTime: "12:00"
+              dayOfWeek: "Hétfő"
+              startTime: "08:00"
+              endTime: "16:30"
               slotDuration: 30
       responses:
         '201':
-          description: Availability létrehozva
+          description: Rendelési idő sikeresen létrehozva.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success: { type: boolean }
+                  success: { type: boolean, example: true }
                   data: { $ref: '#/components/schemas/AvailabilityResponse' }
-              example:
-                success: true
-                data:
-                  _id: "76a1b2c3d4e5f67890123456"
-                  doctor: "698a3e705cf74c640c1f4b1c"
-                  dayOfWeek: "MONDAY"
-                  startTime: "08:30"
-                  endTime: "12:00"
-                  slotDuration: 30
-                  isActive: true
         '400':
-          description: Validation error (e.g., invalid time format or duplicate day)
+          description: Validációs hiba (pl. rossz formátum vagy a nap már létezik).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '403':
-          description: Forbidden (not a doctor or admin)
+          description: Nincs jogosultság (pl. PATIENT próbál idősávot létrehozni).
+
   /api/availability/my:
     get:
       tags: [Availability]
-      summary: A bejelentkezett orvos saját availability-jeinek lekérése
+      summary: Saját rendelési idők lekérése
+      description: Visszaadja a bejelentkezett orvos összes rögzített rendelési napját.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Availability lista a bejelentkezett orvoshoz
+          description: Sikeres lekérdezés.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success: { type: boolean }
-                  count: { type: integer }
+                  success: { type: boolean, example: true }
+                  count: { type: integer, example: 1 }
                   data:
                     type: array
                     items:
                       $ref: '#/components/schemas/AvailabilityResponse'
-              example:
-                success: true
-                count: 1
-                data:
-                  - _id: "76a1b2c3d4e5f67890123456"
-                    doctor: "698a3e705cf74c640c1f4b1c"
-                    dayOfWeek: "MONDAY"
-                    startTime: "08:30"
-                    endTime: "12:00"
-                    slotDuration: 30
-                    isActive: true
+
   /api/availability/{id}:
     delete:
       tags: [Availability]
-      summary: Törli az availability bejegyzést azonosító alapján
+      summary: Rendelési idő törlése
+      description: |
+        Töröl egy konkrét napot az azonosító alapján. 
+        Orvos csak a sajátját, Admin bármelyiket törölheti. 
+        A törlés során a User modellben lévő hivatkozás is automatikusan eltávolításra kerül.
       security:
         - bearerAuth: []
       parameters:
@@ -96,62 +93,75 @@ paths:
           required: true
           schema:
             type: string
+          description: Az availability dokumentum egyedi azonosítója.
       responses:
         '200':
-          description: Törlés sikeres
+          description: Sikeres törlés.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success: { type: boolean }
-                  message: { type: string }
-              example:
-                success: true
-                message: "Rendelési idő sikeresen törölve"
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Rendelési idő sikeresen törölve" }
         '403':
-          description: Forbidden (nem a tulajdonos)
+          description: Nincs jogosultság más orvos naptárát törölni.
         '404':
-          description: Not found
+          description: A megadott azonosítóval nem található rendelési idő.
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
   schemas:
     AvailabilityCreate:
       type: object
-      required: [doctor, dayOfWeek, startTime, endTime]
+      required: [dayOfWeek, startTime, endTime]
       properties:
-        doctor: { type: string }
         dayOfWeek:
           type: string
-          enum: [MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
+          description: A hét napja (magyarul vagy angolul, a rendszer magyarosítja).
+          enum: [Hétfő, Kedd, Szerda, Csütörtök, Péntek, Szombat, Vasárnap, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
+          example: "Kedd"
         startTime:
           type: string
-          description: "Kezdő idő HH:mm formátumban"
-          example: "08:30"
+          pattern: '^([01]\d|2[0-3]):?([0-5]\d)$'
+          description: Kezdési idő HH:mm formátumban.
+          example: "09:00"
         endTime:
           type: string
-          description: "Vég idő HH:mm formátumban"
-          example: "12:00"
+          pattern: '^([01]\d|2[0-3]):?([0-5]\d)$'
+          description: Befejezési idő HH:mm formátumban.
+          example: "17:00"
         slotDuration:
           type: integer
-          description: "Percben megadott időtartam (min: 10, default: 30)"
-          example: 30
+          minimum: 10
+          default: 30
+          description: Egy vizsgálat hossza percekben.
+          example: 20
+        isActive:
+          type: boolean
+          default: true
+          description: Ha hamis, az időpontfoglalás ezen a napon szünetel.
+
     AvailabilityResponse:
       type: object
       properties:
-        _id: { type: string }
-        doctor: { type: string }
-        dayOfWeek: { type: string }
-        startTime: { type: string }
-        endTime: { type: string }
-        slotDuration: { type: integer }
-        isActive: { type: boolean }
+        _id: { type: string, example: "65d9c8e7f123abc456789012" }
+        doctor: { type: string, description: "Az orvos User ID-ja", example: "65d9c123f123abc456789abc" }
+        dayOfWeek: { type: string, example: "Hétfő" }
+        startTime: { type: string, example: "08:00" }
+        endTime: { type: string, example: "16:00" }
+        slotDuration: { type: integer, example: 30 }
+        isActive: { type: boolean, example: true }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+
     Error:
       type: object
       properties:
-        message: { type: string }
-        error: { type: string }
+        success: { type: boolean, example: false }
+        message: { type: string, example: "Kedd napra már van beállított rendelési időd!" }
