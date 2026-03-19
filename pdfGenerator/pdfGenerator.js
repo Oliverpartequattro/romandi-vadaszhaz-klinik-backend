@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 
 // Képek és betűtípusok útvonala (Tégy egy megfelelő képet az assets mappába!)
 const fontPath = path.join(__dirname, '../fonts/Roboto-Regular.ttf');
-const doctorImagePath = path.join(__dirname, '../assets/exotic_doctor.webp'); // Trópusi doktor kép
+const doctorImagePath = path.join(__dirname, '../assets/exotic_doctor.png'); // Trópusi doktor kép
 
 export const generateRecordPDF = (res, record) => {
     const doc = new PDFDocument({ 
@@ -44,7 +44,6 @@ export const generateRecordPDF = (res, record) => {
     // --- FEJLÉC ÉS BRANDING ---
     doc.fillColor('#2c3e50'); // Sötétkék/szürke alapszín
     doc.fontSize(22).text('ROMÁNDI VADÁSZHÁZ KLINIK', 170, 60, { align: 'left' });
-    doc.fontSize(12).text('Exotic Medical Center - Trópusi Gyógyászat', 170, 90, { align: 'left' });
     doc.moveDown(2);
     
     // Elválasztó vonal (egzotikusabb stílusban)
