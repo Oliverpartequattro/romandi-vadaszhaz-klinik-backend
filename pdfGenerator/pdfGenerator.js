@@ -2,102 +2,105 @@ import PDFDocument from 'pdfkit';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Mivel ES modult használsz (import), így kell meghatározni az útvonalat
+// Útvonalak meghatározása
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Képek és betűtípusok útvonala (Tégy egy megfelelő képet az assets mappába!)
 const fontPath = path.join(__dirname, '../fonts/Roboto-Regular.ttf');
-const doctorImagePath = path.join(__dirname, '../assets/exotic_doctor.png'); // Trópusi doktor kép
+const doctorImagePath = path.join(__dirname, '../assets/exotic_doctor.png'); 
 
 export const generateRecordPDF = (res, record) => {
+    // Színpaletta definíciók
+    const colors = {
+        background: '#36483d', // Mély vadászzöld
+        card: '#6b4a2d',       // Barna (másodlagos)
+        textGold: '#bf944a',   // Arany betűszín
+        white: '#ffffff'
+    };
+
     const doc = new PDFDocument({ 
-        margin: 50, 
+        margin: 0, // Teljes háttér miatt 0, majd beljebb kezdünk
         size: 'A4',
         bufferPages: true 
     });
 
     doc.pipe(res);
 
-    // Betűtípus regisztrálása és beállítása
+    // Betűtípus beállítása
     try {
         doc.font(fontPath);
     } catch (err) {
-        console.error("❌ Nem sikerült betölteni a betűtípust:", err.message);
+        console.error("❌ Betűtípus hiba:", err.message);
     }
 
-    // --- VIZUÁLIS ELEMEK ÉS HÁTTÉR ---
-    
-    // 1. Trópusi Háttér-vízjel (opcionális, ha van háttérképed)
-    // doc.image('assets/jungle_pattern.png', 0, 0, { width: doc.page.width, opacity: 0.1 });
+    // --- 1. TELJES OLDAL HÁTTERE ---
+    doc.rect(0, 0, doc.page.width, doc.page.height).fill(colors.background);
 
-    // 2. A "Dizájnos Doktor" elhelyezése
+    // --- 2. FEJLÉC ÉS DOKTOR KÉP ---
     try {
-        // A kért néger orvos sztetoszkóppal, trópusi környezetben
-        doc.image(doctorImagePath, 50, 50, { width: 100, align: 'left' });
+        // A kért doktor kép elhelyezése (bal felső sarok, kis margóval)
+        doc.image(doctorImagePath, 50, 40, { width: 90 });
     } catch (err) {
-        console.error("❌ Nem sikerült betölteni a doktor képét:", err.message);
-        // Fallback: Egy egyszerű ikon vagy üres hely
-        doc.rect(50, 50, 100, 100).stroke();
+        doc.rect(50, 40, 90, 90).stroke(colors.textGold);
     }
 
-    // --- FEJLÉC ÉS BRANDING ---
-    doc.fillColor('#2c3e50'); // Sötétkék/szürke alapszín
-    doc.fontSize(22).text('ROMÁNDI VADÁSZHÁZ KLINIK', 170, 60, { align: 'left' });
-    doc.moveDown(2);
+    doc.fillColor(colors.textGold);
+    doc.fontSize(24).text('ROMÁNDI VADÁSZHÁZ KLINIK', 160, 65, { align: 'left' });
+    doc.fontSize(10).text('HIVATALOS ORVOSI LELET', 160, 95, { characterSpacing: 2 });
+
+    // Díszítő vonal (Arany)
+    doc.rect(50, 140, 500, 2).fill(colors.textGold);
+
+    // --- 3. ADATOK SZEKCIÓ (Barna "kártyák") ---
+    const startY = 170;
+
+    // Páciens kártya
+    doc.rect(50, startY, 240, 100).fill(colors.card);
+    doc.fillColor(colors.textGold).fontSize(12).text('PÁCIENS ADATAI', 60, startY + 10);
+    doc.fillColor(colors.white).fontSize(11);
+    doc.text(`Név: ${record.patient?.name}`, 65, startY + 35);
+    doc.text(`TAJ: ${record.patient?.tajNumber}`);
+    doc.text(`Email: ${record.patient?.email}`);
+
+    // Orvos kártya
+    doc.rect(310, startY, 240, 100).fill(colors.card);
+    doc.fillColor(colors.textGold).fontSize(12).text('KEZELŐORVOS', 320, startY + 10);
+    doc.fillColor(colors.white).fontSize(11);
+    doc.text(`Dr. ${record.doctor?.name}`, 325, startY + 35);
+    doc.text(`Spec.: ${record.doctor?.specialization}`);
+
+    // --- 4. VIZSGÁLAT RÉSZLETEI ---
+    const detailY = 290;
     
-    // Elválasztó vonal (egzotikusabb stílusban)
-    doc.rect(50, 130, 500, 3).fill('#27ae60'); // Zöld szín a trópusi hangulathoz
-    doc.moveDown(3);
-
-    const currentY = doc.y;
-
-    // --- ADATOK SZEKCIÓ (Dinamikus elrendezés) ---
-    
-    // Bal oszlop: Páciens adatai
-    doc.fontSize(14).fillColor('#2c3e50').text('Páciens adatai:', 50, currentY);
-    doc.fontSize(12).fillColor('black').text(`Név: ${record.patient.name}`, 55, currentY + 20);
-    doc.text(`TAJ szám: ${record.patient.tajNumber}`);
-    doc.text(`Email: ${record.patient.email}`);
-
-    // Jobb oszlop: Kezelőorvos adatai
-    doc.fontSize(14).fillColor('#2c3e50').text('Kezelőorvos adatai:', 300, currentY);
-    doc.fontSize(12).fillColor('black').text(`Név: ${record.doctor.name}`, 305, currentY + 20);
-    doc.text(`Szakterület: ${record.doctor.specialization}`);
-
-    doc.moveDown(3);
-
-    // --- ISSUE #1 MEGOLDÁSA: A VIZSGÁLAT VALÓDI IDŐPONTJA ---
-    // Használjuk az appointment_id.startTime-t, ha van, különben a createdAt-et
+    // Dátum kezelése (Issue #1 megoldás)
     const examDate = record.appointment_id?.startTime 
         ? new Date(record.appointment_id.startTime).toLocaleString('hu-HU')
         : new Date(record.createdAt).toLocaleString('hu-HU');
 
-    doc.fontSize(14).fillColor('#2c3e50').text('Vizsgálat részletei:');
-    doc.fontSize(12).fillColor('black').text(`Időpont: ${examDate}`, { bold: true }); // Kiemelve
-    doc.text(`Szolgáltatás: ${record.service?.topic || 'Általános vizsgálat'}`);
-    doc.moveDown(2);
+    doc.fillColor(colors.textGold).fontSize(14).text('VIZSGÁLAT RÉSZLETEI', 50, detailY);
+    doc.rect(50, detailY + 20, 500, 40).fill(colors.card);
+    doc.fillColor(colors.white).fontSize(11);
+    doc.text(`Időpont: ${examDate} | Szolgáltatás: ${record.service?.topic || 'Általános'}`, 65, detailY + 33);
 
-    // --- DIAGNÓZIS / LEÍRÁS (Keretezett) ---
+    // --- 5. ORVOSI VÉLEMÉNY (Nagy kártya) ---
+    const opinionY = 370;
+    doc.fillColor(colors.textGold).fontSize(14).text('ORVOSI VÉLEMÉNY ÉS DIAGNÓZIS', 50, opinionY);
     
-    // Keret (zöld színnel)
-    doc.rect(50, doc.y, 500, 180).stroke('#27ae60'); 
-    
-    // Cím
-    const opinionY = doc.y;
-    doc.fontSize(15).fillColor('#2c3e50').text(' Orvosi vélemény / Leírás:', 55, opinionY + 15);
-    
-    // Szöveg
-    doc.fontSize(11).fillColor('black').text(record.description, 60, opinionY + 40, { 
-        width: 480, 
-        align: 'justify', // Igazított szöveg
-        lineGap: 4 // Jobb olvashatóság
+    doc.rect(50, opinionY + 20, 500, 250).fill(colors.card);
+    doc.fillColor(colors.white).fontSize(12);
+    doc.text(record.description || 'Nincs megadott leírás.', 70, opinionY + 45, {
+        width: 460,
+        align: 'justify',
+        lineGap: 5
     });
 
-    // --- LÁBLÉC ---
-    const bottom = doc.page.height - 80;
-    doc.rect(50, bottom - 10, 500, 1).fill('grey'); // Elválasztó vonal
-    doc.fontSize(9).fillColor('grey').text('Ez a dokumentum elektronikusan készült, a Romándi Vadászház Klinik Exotic Medical Centerének hivatalos lelete.', 50, bottom, { align: 'center' });
+    // --- 6. LÁBLÉC ---
+    const footerY = doc.page.height - 60;
+    doc.rect(50, footerY, 500, 1).fill(colors.textGold);
+    doc.fillColor(colors.textGold).fontSize(8).text(
+        'Ez a dokumentum a Romándi Vadászház Klinik digitális rendszerében készült. Hiteles másolat.',
+        50, footerY + 15, { align: 'center' }
+    );
     doc.text(`Generálva: ${new Date().toLocaleString('hu-HU')}`, { align: 'center' });
 
     doc.end();
