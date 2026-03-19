@@ -38,7 +38,7 @@ export const generateRecordPDF = (res, record) => {
 
     // --- 2. FEJLÉC ÉS DOKTOR KÉP ---
     try {
-        doc.image(doctorImagePath, 50, 40, { width: 90 });
+        doc.image(doctorImagePath, 100, 80, { width: 90 });
     } catch (err) {
         doc.rect(50, 40, 90, 90).stroke(colors.textGold);
     }
@@ -65,8 +65,10 @@ export const generateRecordPDF = (res, record) => {
     doc.rect(310, startY, 240, 100).fill(colors.card);
     doc.fillColor(colors.textGold).fontSize(12).text('KEZELŐORVOS', 320, startY + 10);
     doc.fillColor(colors.white).fontSize(11);
-    doc.text(`Dr. ${record.doctor?.name}`, 325, startY + 35);
-    doc.text(`Spec.: ${record.doctor?.specialization}`);
+    doc.text(`${record.doctor?.name}`, 325, startY + 35);
+    doc.text(`Specializáció: ${record.doctor?.specialization}`);
+    doc.text(`Email: ${record.doctor?.email}`);
+    doc.text(`Telefonszám: ${record.doctor?.phone}`);
 
     // --- 4. VIZSGÁLAT RÉSZLETEI (Tördelt verzió) ---
     const detailY = 290;
