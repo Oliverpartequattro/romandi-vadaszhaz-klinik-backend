@@ -52,9 +52,14 @@ Authorization: Bearer {{doctorLogin.response.body.token}}
 Content-Type: application/json
 
 {
-    "patient": "698ee6788436052991825b24",
+    "patient": "69a7f988920de33aac1ccda4",
     "description": "Végbélrák gyanúja, további vizsgálatok szükségesek.",
     "service": "698ee8188436052991825b36"
 }
+### PDF generálás tesztelése
+GET {{baseUrl}}/records/69bbbbdb55e32741f4427455/pdf
+Authorization: Bearer {{doctorLogin.response.body.token}}
+Content-Type: application/json
+
 
 

@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/', protect, admin, async (req, res) => {
     try {
         console.log("--- Összes rekord lekérése (Admin) ---");
-        
+
         // A .populate() segítségével az ID-k helyett a neveket is látjuk a válaszban
         const records = await Record.find({})
             .populate('patient', 'name email tajNumber')
@@ -19,9 +19,9 @@ router.get('/', protect, admin, async (req, res) => {
 
         res.json(records);
     } catch (error) {
-        res.status(500).json({ 
-            message: "Hiba a rekordok lekérésekor", 
-            error: error.message 
+        res.status(500).json({
+            message: "Hiba a rekordok lekérésekor",
+            error: error.message
         });
     }
 });
@@ -41,8 +41,8 @@ router.get('/patient/:patientId', protect, async (req, res) => {
         const isSelf = currentUser._id.toString() === targetPatientId;
 
         if (!isStaff && !isSelf) {
-            return res.status(403).json({ 
-                message: "Nincs jogosultságod más páciens kórtörténetét megtekinteni!" 
+            return res.status(403).json({
+                message: "Nincs jogosultságod más páciens kórtörténetét megtekinteni!"
             });
         }
 
@@ -66,7 +66,7 @@ router.get('/my', protect, async (req, res) => {
         // Ha páciens: a saját leleteit látja
         if (req.user.role === 'PATIENT') {
             filter = { patient: req.user._id };
-        } 
+        }
         // Ha orvos: az általa kiállított leleteket látja
         else if (req.user.role === 'DOCTOR') {
             filter = { doctor: req.user._id };
@@ -81,9 +81,9 @@ router.get('/my', protect, async (req, res) => {
 
         res.json(myRecords);
     } catch (error) {
-        res.status(500).json({ 
-            message: "Hiba a saját rekordok lekérésekor", 
-            error: error.message 
+        res.status(500).json({
+            message: "Hiba a saját rekordok lekérésekor",
+            error: error.message
         });
     }
 });
@@ -125,7 +125,7 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
         // 5. EMAIL KÜLDÉS: Értesítés a páciensnek
         // Importáld a sendDoctorResponseEmail-t a mail.js-ből!
         const { sendDoctorResponseEmail } = await import('../mail/mail.js'); // Vagy a fájl tetején importáld
-        
+
         sendDoctorResponseEmail(
             patientExists.email,
             patientExists.name,
@@ -140,9 +140,9 @@ router.post('/', protect, doctorOrAdmin, async (req, res) => {
 
     } catch (error) {
         console.error("❌ Hiba a rekord mentésekor:", error);
-        res.status(500).json({ 
-            message: "Hiba a rekord mentésekor", 
-            error: error.message 
+        res.status(500).json({
+            message: "Hiba a rekord mentésekor",
+            error: error.message
         });
     }
 });
@@ -154,7 +154,11 @@ router.get('/:id/pdf', async (req, res) => {
         const record = await Record.findById(req.params.id)
             .populate('patient', 'name email tajNumber')
             .populate('doctor', 'name specialization')
-            .populate('service', 'topic');
+            .populate('service', 'topic')
+            .populate({
+                path: 'appointment_id',
+                select: 'startTime'
+            });
 
         if (!record) {
             return res.status(404).json({ message: "Lelet nem található" });
