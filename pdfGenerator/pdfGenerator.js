@@ -38,7 +38,7 @@ export const generateRecordPDF = (res, record) => {
 
     // --- 2. FEJLÉC ÉS DOKTOR KÉP ---
     try {
-        doc.image(doctorImagePath, 50, 40, { width: 110 });
+        doc.image(doctorImagePath, 50, 40, { width: 90 });
     } catch (err) {
         doc.rect(50, 40, 90, 90).stroke(colors.textGold);
     }
