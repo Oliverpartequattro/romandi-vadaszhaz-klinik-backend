@@ -10,7 +10,7 @@ const fontPath = path.join(__dirname, '../fonts/Roboto-Regular.ttf');
 const doctorImagePath = path.join(__dirname, '../assets/exotic_doctor.png'); 
 
 export const generateRecordPDF = (res, record) => {
-    // Színpaletta definíciók
+    // Romándi Vadászház Színpaletta
     const colors = {
         background: '#36483d', // Mély vadászzöld
         card: '#6b4a2d',       // Barna (másodlagos)
@@ -19,7 +19,7 @@ export const generateRecordPDF = (res, record) => {
     };
 
     const doc = new PDFDocument({ 
-        margin: 0, // Teljes háttér miatt 0, majd beljebb kezdünk
+        margin: 0, 
         size: 'A4',
         bufferPages: true 
     });
@@ -38,7 +38,6 @@ export const generateRecordPDF = (res, record) => {
 
     // --- 2. FEJLÉC ÉS DOKTOR KÉP ---
     try {
-        // A kért doktor kép elhelyezése (bal felső sarok, kis margóval)
         doc.image(doctorImagePath, 50, 40, { width: 90 });
     } catch (err) {
         doc.rect(50, 40, 90, 90).stroke(colors.textGold);
@@ -51,7 +50,7 @@ export const generateRecordPDF = (res, record) => {
     // Díszítő vonal (Arany)
     doc.rect(50, 140, 500, 2).fill(colors.textGold);
 
-    // --- 3. ADATOK SZEKCIÓ (Barna "kártyák") ---
+    // --- 3. ADATOK SZEKCIÓ (Barna kártyák) ---
     const startY = 170;
 
     // Páciens kártya
@@ -69,21 +68,25 @@ export const generateRecordPDF = (res, record) => {
     doc.text(`Dr. ${record.doctor?.name}`, 325, startY + 35);
     doc.text(`Spec.: ${record.doctor?.specialization}`);
 
-    // --- 4. VIZSGÁLAT RÉSZLETEI ---
+    // --- 4. VIZSGÁLAT RÉSZLETEI (Tördelt verzió) ---
     const detailY = 290;
     
-    // Dátum kezelése (Issue #1 megoldás)
     const examDate = record.appointment_id?.startTime 
         ? new Date(record.appointment_id.startTime).toLocaleString('hu-HU')
         : new Date(record.createdAt).toLocaleString('hu-HU');
 
     doc.fillColor(colors.textGold).fontSize(14).text('VIZSGÁLAT RÉSZLETEI', 50, detailY);
-    doc.rect(50, detailY + 20, 500, 40).fill(colors.card);
+    
+    // Megnöveltük a kártya magasságát (40 -> 60), hogy elférjen a két sor
+    doc.rect(50, detailY + 20, 500, 60).fill(colors.card);
     doc.fillColor(colors.white).fontSize(11);
-    doc.text(`Időpont: ${examDate} | Szolgáltatás: ${record.service?.topic || 'Általános'}`, 65, detailY + 33);
+    
+    // Szétbontva két sorra:
+    doc.text(`Időpont: ${examDate}`, 65, detailY + 33);
+    doc.text(`Szolgáltatás: ${record.service?.topic || 'Általános vizsgálat'}`, 65, detailY + 50);
 
-    // --- 5. ORVOSI VÉLEMÉNY (Nagy kártya) ---
-    const opinionY = 370;
+    // --- 5. ORVOSI VÉLEMÉNY ---
+    const opinionY = 380; // Kicsit lejjebb toltuk az előző szekció növekedése miatt
     doc.fillColor(colors.textGold).fontSize(14).text('ORVOSI VÉLEMÉNY ÉS DIAGNÓZIS', 50, opinionY);
     
     doc.rect(50, opinionY + 20, 500, 250).fill(colors.card);
