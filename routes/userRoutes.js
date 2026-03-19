@@ -259,6 +259,7 @@ router.post('/forgot-password', async (req, res) => {
 
     // Email küldése (használd a már meglévő mail.js-edet)
     sendResetCodeEmail(user.email, resetCode);
+    res.json({ message: "Jelszó visszaállító kód elküldve!" });
 });
 
 router.post('/reset-password', async (req, res) => {
