@@ -153,7 +153,7 @@ router.get('/:id/pdf', async (req, res) => {
     try {
         const record = await Record.findById(req.params.id)
             .populate('patient', 'name email tajNumber')
-            .populate('doctor', 'name specialization')
+            .populate('doctor', 'name specialization phone email')
             .populate('service', 'topic')
             .populate({
                 path: 'appointment_id',
