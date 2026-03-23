@@ -67,4 +67,60 @@ router.get('/:doctorId', async (req, res) => {
     }
 });
 
+// @desc    4. Szolgáltatás módosítása (Admin bármit, Orvos csak a sajátját)
+// @route   PUT /api/services/:id
+router.put('/:id', protect, async (req, res) => {
+    try {
+        const service = await Service.findById(req.params.id);
+
+        if (!service) {
+            return res.status(404).json({ message: 'A szolgáltatás nem található' });
+        }
+
+        // JOGOSULTSÁG ELLENŐRZÉS: Csak az Admin vagy a szolgáltatást létrehozó orvos módosíthat
+        const isOwner = service.doctor_id.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === 'ADMIN';
+
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ message: 'Nincs jogosultságod más orvos szolgáltatását módosítani!' });
+        }
+
+        // Frissítjük a mezőket a kérés alapján
+        const updatedService = await Service.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true, runValidators: true } // Az új objektumot adja vissza és futtatja a sémában lévő validációt
+        );
+
+        res.json(updatedService);
+    } catch (error) {
+        res.status(400).json({ message: 'Hiba a módosítás során', error: error.message });
+    }
+});
+
+// @desc    5. Szolgáltatás törlése (Admin bármit, Orvos csak a sajátját)
+// @route   DELETE /api/services/:id
+router.delete('/:id', protect, async (req, res) => {
+    try {
+        const service = await Service.findById(req.params.id);
+
+        if (!service) {
+            return res.status(404).json({ message: 'A szolgáltatás nem található' });
+        }
+
+        // JOGOSULTSÁG ELLENŐRZÉS
+        const isOwner = service.doctor_id.toString() === req.user._id.toString();
+        const isAdmin = req.user.role === 'ADMIN';
+
+        if (!isOwner && !isAdmin) {
+            return res.status(403).json({ message: 'Nincs jogosultságod más orvos szolgáltatását törölni!' });
+        }
+
+        await service.deleteOne();
+        res.json({ message: 'Szolgáltatás sikeresen törölve' });
+    } catch (error) {
+        res.status(500).json({ message: 'Hiba a törlés során', error: error.message });
+    }
+});
+
 export default router;
