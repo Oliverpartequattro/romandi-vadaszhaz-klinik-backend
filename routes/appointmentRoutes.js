@@ -4,6 +4,7 @@ import Appointment from '../models/Appointment.js';
 import Availability from '../models/Availability.js'; // Be kell importálni!
 import { protect, admin } from '../middleware/authMiddleware.js';
 import { sendBookEmail } from '../mail/mail.js';
+import { formatInTimeZone } from 'date-fns-tz';
 
 const router = express.Router();
 
@@ -29,15 +30,24 @@ router.post('/', protect, async (req, res) => {
     try {
         const { doctor_id, service_id, startTime, endTime, referral_type, referred_by } = req.body;
 
-        // 1. Dátum objektummá alakítás és a nap kinyerése
+        // 1. Időzóna fixálása (Budapest)
+        const timeZone = 'Europe/Budapest';
         const requestedDate = new Date(startTime);
-        const days = ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'];
-        const dayName = days[requestedDate.getDay()];
 
-        // Kinyerjük az időt HH:mm formátumban az összehasonlításhoz
-        const requestedTimeStr = requestedDate.toTimeString().substring(0, 5); 
+        // Kinyerjük a nap nevét magyarul a budapesti idő szerint
+        const dayNamesHU = ['Vasárnap', 'Hétfő', 'Kedd', 'Szerda', 'Csütörtök', 'Péntek', 'Szombat'];
+        // A 'i' formátumkód a hét napját adja vissza (0-6)
+        const dayIndex = parseInt(formatInTimeZone(requestedDate, timeZone, 'i')) % 7; 
+        const dayName = dayNamesHU[dayIndex];
 
-        // 2. Orvos elérhetőségének ellenőrzése
+        // Kinyerjük a pontos órát és percet HH:mm formátumban a budapesti idő szerint
+        const requestedTimeStr = formatInTimeZone(requestedDate, timeZone, 'HH:mm'); 
+
+        console.log(`--- Foglalási kísérlet ---`);
+        console.log(`Eredeti ISO: ${startTime}`);
+        console.log(`Értelmezett helyi idő (HU): ${requestedTimeStr} (${dayName})`);
+
+        // 2. Orvos elérhetőségének ellenőrzése (marad az adatbázis lekérdezés)
         const availability = await Availability.findOne({
             doctor: doctor_id,
             dayOfWeek: dayName,
@@ -50,7 +60,7 @@ router.post('/', protect, async (req, res) => {
             });
         }
 
-        // 3. Időintervallum ellenőrzése (startTime >= availability.startTime ÉS < availability.endTime)
+        // 3. Időintervallum ellenőrzése - Most már a helyes requestedTimeStr-t hasonlítjuk össze
         if (requestedTimeStr < availability.startTime || requestedTimeStr >= availability.endTime) {
             return res.status(400).json({ 
                 message: `A választott időpont (${requestedTimeStr}) kívül esik az orvos rendelési idején (${availability.startTime} - ${availability.endTime})` 

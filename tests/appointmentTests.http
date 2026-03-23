@@ -57,9 +57,9 @@ Authorization: Bearer {{patientLogin.response.body.token}}
 Content-Type: application/json
 
 {
-    "doctor_id": "698ee61f8436052991825b1f", 
+    "doctor_id": "69a7f988920de33aac1ccda1", 
     "service_id": "698ee8188436052991825b36",
-    "startTime": "2026-05-20T10:00:00",
+    "startTime": "2026-05-19T10:00:00+02:00",
     "referral_type": "SELF"
 }
 
