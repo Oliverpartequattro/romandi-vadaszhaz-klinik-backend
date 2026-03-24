@@ -12,10 +12,11 @@ Webalapú klinik időpontfoglaló rendszer backendje. Ez a dokumentáció a fron
 
 ## 🛠 Technológiai Stack
 
-* **Runtime:** Node.js (Express)
+* **Runtime:** Node.js (Express) - ES6 Module System
 * **Adatbázis:** MongoDB Atlas
 * **Auth:** JWT (JSON Web Token)
 * **Validáció:** Mongoose Schemas & Custom Validators
+* **ORM:** Mongoose (MongoDB object modeling)
 
 ---
 
@@ -107,4 +108,155 @@ A backend most már részletes hibaüzeneteket küld a `400 Bad Request` mellé:
 
 ---
 
-*Utolsó frissítés: 2026. február 11.*
+---
+
+## 📦 Projekt Szerkezet
+
+```
+romandi-vadaszhaz-klinik-backend/
+├── models/              # Mongoose Schemas (ES6 modules)
+│   ├── User.js
+│   ├── Doctor.js
+│   ├── Patient.js
+│   ├── Appointment.js
+│   ├── Record.js
+│   └── Service.js
+├── routes/              # API végpontok
+│   ├── userRoutes.js
+│   └── adminRoutes.js
+├── config/              # Konfigurációs fájlok
+│   └── db.js
+├── mock data/           # Test adatok JSON-L formátumban
+├── server.js            # Express szerver belépési pontja
+└── package.json
+```
+
+---
+
+## 🔄 ES6 Module Rendszer
+
+A projekt ES6 `import/export` szintaxist használ:
+
+```javascript
+// Models importálása
+import User from './models/User.js';
+import Service from './models/Service.js';
+import Appointment from './models/Appointment.js';
+
+// Model definiálása
+const userSchema = new mongoose.Schema({
+    email: { type: String, required: true, unique: true },
+    // ... mezők
+}, { timestamps: true });
+
+const User = mongoose.model('User', userSchema);
+export default User;
+```
+
+---
+
+## 📋 Modellek és Kötelező Mezők
+
+### **User Model**
+
+**Kötelező mezők (mindenkire):**
+| Mező | Típus | Validáció |
+|------|-------|-----------|
+| `name` | String | 3-50 karakter |
+| `email` | String | Egyedi, regex validáció |
+| `password` | String | Min 8 kar, betű + szám szükséges |
+| `phone` | String | Magyar telefonszám (+36 vagy 06) |
+| `birthDate` | Date | 0-110 év közötti kor |
+| `gender` | String | MALE vagy FEMALE |
+| `role` | String | ADMIN, DOCTOR, PATIENT |
+
+**Kondicionális kötelezők (csak PATIENT):**
+| Mező | Típus | Validáció |
+|------|-------|-----------|
+| `tajNumber` | String | Pontosan 9 számjegy |
+| `address` | String | Formátum: 1234 Város, Utca |
+
+**Kondicionális kötelezők (csak DOCTOR):**
+| Mező | Típus | Validáció |
+|------|-------|-----------|
+| `specialization` | String | Kötelező orvosoknak |
+
+**Opcionális mezők:**
+- `resetPasswordCode` - String
+- `resetPasswordExpires` - Date
+- `records` - Array (Record-okra való hivatkozások)
+- `availabilities` - Array (Availability-kra való hivatkozások)
+
+---
+
+### **Service Model**
+
+**Kötelező mezők:**
+| Mező | Típus | Leírás |
+|------|-------|--------|
+| `doctor_id` | ObjectId | User referencia (orvos) |
+| `topic` | String | Pl. Kardiológia, Ortopédia |
+| `description` | String | Szolgáltatás leírása |
+| `location` | String | Helyszín (pl. 102-es vizsgáló) |
+| `price` | String | Ár (számadat vagy szöveg) |
+
+**Opcionális mezők:**
+- `date` - Date (konkrét időpont)
+- `patient_id` - ObjectId (User referencia, default: null)
+- `created_by` - ObjectId (User referencia)
+
+---
+
+### **Appointment Model**
+
+**Kötelező mezők:**
+| Mező | Típus | Validáció |
+|------|-------|-----------|
+| `doctor_id` | ObjectId | User referencia |
+| `patient_id` | ObjectId | User referencia |
+| `service_id` | ObjectId | Service referencia |
+| `startTime` | Date | Múltbeli nem lehet, jövő dátum szükséges |
+| `status` | String | PENDING, ACCEPTED, REJECTED, PROPOSED, CANCELLED, COMPLETED |
+
+**Opcionális mezők:**
+- `endTime` - Date (nagyobb kell legyen, mint startTime)
+- `referral_type` - String (SELF vagy DOCTOR, default: SELF)
+- `referred_by` - ObjectId (User referencia, DOCTOR referral esetén)
+- `created_by` - ObjectId (User referencia)
+
+---
+
+### **Availability Model**
+
+**Kötelező mezők:**
+| Mező | Típus | Validáció |
+|------|-------|-----------|
+| `doctor` | ObjectId | User referencia |
+| `dayOfWeek` | String | Hétfő-Vasárnap |
+| `startTime` | String | HH:mm formátum (pl. 08:00) |
+| `endTime` | String | HH:mm formátum (pl. 16:00) |
+
+**Opcionális mezők:**
+- `slotDuration` - Number (default: 30 perc, minimum: 10)
+- `isActive` - Boolean (default: true, orvos betegszabadság kezeléshez)
+
+**Speciális szabály:** Egy orvosnak egy napra csak egy rendelési ideje lehet (unique index: `doctor + dayOfWeek`)
+
+---
+
+### **Record Model**
+
+**Kötelező mezők:**
+| Mező | Típus | Leírás |
+|------|-------|--------|
+| `patient` | ObjectId | User referencia (páciens) |
+| `doctor` | ObjectId | User referencia (orvos) |
+| `description` | String | Vizsgálat/kezelés leírása |
+
+**Opcionális mezők:**
+- `appointment_id` - ObjectId (Appointment referencia)
+- `service` - ObjectId (Service referencia)
+
+---
+
+*Utolsó frissítés: 2026. március 24.*
