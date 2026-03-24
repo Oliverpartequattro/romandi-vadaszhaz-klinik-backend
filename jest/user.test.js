@@ -1,4 +1,5 @@
 import { jest } from '@jest/globals';
+import {errorHandler} from '../middleware/errorMiddleware.js';
 import request from 'supertest';
 import express from 'express';
 import mongoose from 'mongoose';
@@ -38,6 +39,7 @@ import User from '../models/User.js';
 const app = express();
 app.use(express.json());
 app.use('/api/users', userRoutes);
+app.use(errorHandler);
 
 describe('User Routes & Auth (Klinikai tesztek)', () => {
     let adminUser, patientUser, doctorUser;
@@ -107,7 +109,7 @@ describe('User Routes & Auth (Klinikai tesztek)', () => {
                 birthDate: '1990-01-01',
                 gender: 'MALE'
             });
-
+            
         expect(res.statusCode).toBe(400); // Mongoose ValidationError
     });
 
