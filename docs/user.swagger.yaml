@@ -1,23 +1,21 @@
 openapi: 3.0.0
 info:
   title: Romándi Vadászház Klinik - Felhasználók API
-  version: "1.1.0"
+  version: "1.2.0"
   description: |
-    Felhasználókezelés, hitelesítés és jogosultságkezelés. 
-    A rendszer három szerepkört támogat: `PATIENT` (alapértelmezett), `DOCTOR`, `ADMIN`.
+    Felhasználókezelés, hitelesítés és komplex Dashboard adatok kiszolgálása. 
+    A rendszer három szerepkört támogat: `PATIENT`, `DOCTOR`, `ADMIN`.
 tags:
   - name: Users
     description: Regisztráció, bejelentkezés és profil műveletek
+  - name: Stats
+    description: Személyre szabott statisztikai adatok
 
 paths:
   /api/users/register:
     post:
       tags: [Users]
       summary: Új felhasználó regisztrálása
-      description: |
-        Létrehoz egy új felhasználót. 
-        - Páciens esetén kötelező: `tajNumber`, `address`.
-        - Orvos esetén kötelező: `specialization`.
       requestBody:
         required: true
         content:
@@ -32,7 +30,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserAuthResponse'
         '400':
-          description: Validációs hiba (pl. foglalt email, gyenge jelszó vagy érvénytelen telefonszám).
+          description: Validációs hiba.
 
   /api/users/login:
     post:
@@ -51,22 +49,24 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAuthResponse'
-        '401':
-          description: Érvénytelen hitelesítési adatok.
 
   /api/users/profile:
     get:
       tags: [Users]
-      summary: Bejelentkezett felhasználó saját profilja
+      summary: Bejelentkezett felhasználó teljes Dashboard adatcsomagja
+      description: |
+        Visszaadja a felhasználó adatait, az összes leletét (időrendben), 
+        az összes időpontját, a legközelebbi vizitjét és a számított statisztikákat.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Részletes profiladatok (pácienseknél leletekkel, orvosoknál rendelési idővel).
+          description: Összetett Dashboard válasz.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfileResponse'
+
     put:
       tags: [Users]
       summary: Saját profil frissítése
@@ -82,11 +82,32 @@ paths:
         '200':
           description: Profil sikeresen frissítve.
 
+  /api/users/stats/me:
+    get:
+      tags: [Stats]
+      summary: Személyre szabott statisztikák lekérése
+      description: |
+        Szerepkörtől függő statisztika:
+        - Admin: Rendszer szintű adatok.
+        - Doctor: Saját páciensek és kezelések száma.
+        - Patient: Leletek száma és becsült egészségügyi befektetés.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Statisztikai adatok objektuma.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  stats: { type: object }
+
   /api/users/doctors:
     get:
       tags: [Users]
-      summary: Orvosok listájának lekérése
-      description: Publikus lista az orvosokról, szakterületükről és rendelési idejükről.
+      summary: Orvosok listája rendelési idővel
       responses:
         '200':
           description: Orvosok listája.
@@ -95,36 +116,17 @@ paths:
     post:
       tags: [Users]
       summary: Elfelejtett jelszó kód kérése
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email: { type: string }
       responses:
         '200':
-          description: A 6 jegyű kód kiküldve emailben.
+          description: Kód kiküldve.
 
   /api/users/reset-password:
     post:
       tags: [Users]
       summary: Jelszó visszaállítása kóddal
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [email, code, newPassword]
-              properties:
-                email: { type: string }
-                code: { type: string, description: "6 jegyű kód" }
-                newPassword: { type: string }
       responses:
         '200':
-          description: Jelszó sikeresen megváltoztatva.
+          description: Sikeres módosítás.
 
 components:
   securitySchemes:
@@ -138,16 +140,16 @@ components:
       type: object
       required: [name, email, password, phone, birthDate, gender]
       properties:
-        name: { type: string, minLength: 3, maxLength: 50 }
+        name: { type: string }
         email: { type: string, format: email }
-        password: { type: string, pattern: '^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$' }
-        phone: { type: string, example: "+36301234567" }
+        password: { type: string }
+        phone: { type: string }
         birthDate: { type: string, format: date }
         gender: { type: string, enum: [MALE, FEMALE] }
-        role: { type: string, enum: [DOCTOR, PATIENT], default: PATIENT }
-        tajNumber: { type: string, description: "Pácienseknél kötelező (9 számjegy)" }
-        address: { type: string, description: "Pácienseknél kötelező (Irányítószám Város, Utca)" }
-        specialization: { type: string, description: "Orvosoknál kötelező" }
+        role: { type: string, enum: [DOCTOR, PATIENT] }
+        tajNumber: { type: string }
+        address: { type: string }
+        specialization: { type: string }
 
     UserAuthResponse:
       type: object
@@ -160,27 +162,46 @@ components:
         token: { type: string }
 
     UserProfileResponse:
-      allOf:
-        - $ref: '#/components/schemas/UserAuthResponse'
-        - type: object
+      type: object
+      properties:
+        success: { type: boolean }
+        user:
+          type: object
           properties:
+            _id: { type: string }
+            name: { type: string }
+            email: { type: string }
             phone: { type: string }
             tajNumber: { type: string, nullable: true }
             address: { type: string, nullable: true }
             birthDate: { type: string, format: date }
             gender: { type: string }
+            role: { type: string }
             specialization: { type: string, nullable: true }
-            records: { type: array, items: { type: object } }
-            availabilities: { type: array, items: { type: object } }
+        nextAppointment: { type: object, nullable: true, description: "A legközelebbi jövőbeli ACCEPTED időpont" }
+        appointments: { type: array, items: { type: object }, description: "Az összes időpont" }
+        records: { type: array, items: { type: object }, description: "Az összes lelet csökkenő időrendben" }
+        availabilities: { type: array, items: { type: object }, description: "Orvosok esetén a rendelési idők" }
+        stats:
+          type: object
+          properties:
+            totalVisits: { type: integer }
+            activeAppointments: { type: integer }
+            lastVisitDate: { type: string, format: date-time, nullable: true }
+        token: { type: string }
 
     UserUpdate:
       type: object
       properties:
         name: { type: string }
+        email: { type: string }
         phone: { type: string }
         address: { type: string }
-        password: { type: string }
+        tajNumber: { type: string }
+        birthDate: { type: string }
+        gender: { type: string }
         specialization: { type: string }
+        password: { type: string }
 
     UserLogin:
       type: object
