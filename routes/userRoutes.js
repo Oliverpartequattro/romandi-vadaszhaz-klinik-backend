@@ -135,38 +135,69 @@ router.post("/login", async (req, res, next) => {
   }
 });
 
-// @desc    4. Bejelentkezett felhasználó profilja
+// @desc    4. Bejelentkezett felhasználó profilja (Dashboard aggregációval)
 router.get("/profile", protect, async (req, res, next) => {
   try {
+    // 1. User és Leletek lekérése (Rendezve a legfrissebbtől)
     const user = await User.findById(req.user._id)
       .populate({
         path: 'records',
+        options: { sort: { createdAt: -1 } }, // Szemethy kérte: legfrissebb elöl
         populate: [
           { path: 'doctor', select: 'name specialization email' },
-          { path: 'service', select: 'name description' }
+          { path: 'service', select: 'name description topic' }
         ]
       })
-      .populate('availabilities'); // Ha orvos az illető, lássa a saját táblázatát
+      .populate('availabilities');
 
     if (!user) {
       return next(new ErrorResponse("Felhasználó nem található", 404));
     }
 
+    // 2. Időpontok lekérése (Mivel a user modellben nincs direkt link az összesre)
+    const allAppointments = await Appointment.find({ patient_id: req.user._id })
+      .populate('doctor_id', 'name specialization')
+      .populate('service_id', 'topic location')
+      .sort({ startTime: 1 }); // Időrendben növekvő
+
+    // 3. Logika: Következő vizit meghatározása
+    const now = new Date();
+    const nextAppointment = allAppointments.find(app => 
+      app.status === 'ACCEPTED' && new Date(app.startTime) > now
+    ) || null;
+
+    // 4. Statisztikák kiszámítása (Ahogy az issue-ban kérték)
+    const stats = {
+      totalVisits: user.records ? user.records.length : 0,
+      activeAppointments: allAppointments.filter(app => 
+        new Date(app.startTime) > now && ['PENDING', 'ACCEPTED', 'PROPOSED'].includes(app.status)
+      ).length,
+      lastVisitDate: user.records && user.records.length > 0 
+        ? user.records[0].createdAt 
+        : null
+    };
+
+    // 5. Válasz küldése a kért struktúrában
     res.json({
       success: true,
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      tajNumber: user.tajNumber,
-      address: user.address,
-      birthDate: user.birthDate,
-      gender: user.gender,
-      role: user.role,
-      specialization: user.specialization, // Orvosnál fontos
-      records: user.records,
-      availabilities: user.availabilities, // Itt lesznek a rendelési idők
-      token: generateToken(user._id),
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        tajNumber: user.tajNumber,
+        address: user.address,
+        birthDate: user.birthDate,
+        gender: user.gender,
+        role: user.role,
+        specialization: user.specialization,
+      },
+      nextAppointment, 
+      appointments: allAppointments,
+      records: user.records || [],
+      availabilities: user.availabilities, 
+      stats,
+      token: generateToken(user._id), // Marad a token frissítés, ha szükséges
     });
   } catch (error) {
     next(error);
