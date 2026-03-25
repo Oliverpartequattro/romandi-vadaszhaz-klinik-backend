@@ -46,10 +46,6 @@ router.post("/", protect, doctorOrAdmin, async (req, res, next) => {
       dayOfWeek,
     });
 
-    if (existingAvailability) {
-      return next(new ErrorResponse(`${dayOfWeek} napra már van beállított rendelési időd!`, 400));
-    }
-
     const availability = await Availability.create({
       doctor: doctorId,
       dayOfWeek,
