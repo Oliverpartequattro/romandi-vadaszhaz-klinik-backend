@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Romándi Vadászház Klinik - Felhasználók API
-  version: "1.2.0"
+  version: "1.3.0"
   description: |
     Felhasználókezelés, hitelesítés és komplex Dashboard adatok kiszolgálása. 
     A rendszer három szerepkört támogat: `PATIENT`, `DOCTOR`, `ADMIN`.
@@ -9,7 +9,7 @@ tags:
   - name: Users
     description: Regisztráció, bejelentkezés és profil műveletek
   - name: Stats
-    description: Személyre szabott statisztikai adatok
+    description: Személyre szabott statisztikai adatok (Dashboard aggregáció)
 
 paths:
   /api/users/register:
@@ -30,7 +30,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserAuthResponse'
         '400':
-          description: Validációs hiba.
+          description: Validációs hiba (pl. már foglalt email).
 
   /api/users/login:
     post:
@@ -49,6 +49,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserAuthResponse'
+        '401':
+          description: Érvénytelen email vagy jelszó.
 
   /api/users/profile:
     get:
@@ -56,7 +58,7 @@ paths:
       summary: Bejelentkezett felhasználó teljes Dashboard adatcsomagja
       description: |
         Visszaadja a felhasználó adatait, az összes leletét (időrendben), 
-        az összes időpontját, a legközelebbi vizitjét és a számított statisztikákat.
+        az összes időpontját, a legközelebbi vizitjét és az alapvető statisztikákat.
       security:
         - bearerAuth: []
       responses:
@@ -66,7 +68,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserProfileResponse'
-
     put:
       tags: [Users]
       summary: Saját profil frissítése
@@ -85,31 +86,28 @@ paths:
   /api/users/stats/me:
     get:
       tags: [Stats]
-      summary: Személyre szabott statisztikák lekérése
+      summary: Személyre szabott részletes statisztikák
       description: |
-        A bejelentkezett felhasználó szerepköre alapján eltérő statisztikai adatokat ad vissza.
+        A bejelentkezett felhasználó szerepköre alapján eltérő mélységű adatokat ad vissza:
+        - **PATIENT**: Lezárt/aktív foglalások száma + Következő vizit részletei (orvos, helyszín).
+        - **DOCTOR**: Páciensek száma + Következő páciens + Legutóbbi vizit adatai.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Sikeres lekérdezés.
+          description: Részletes statisztikai objektum.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success:
-                    type: boolean
-                    example: true
+                  success: { type: boolean }
+                  role: { type: string, enum: [PATIENT, DOCTOR, ADMIN] }
                   stats:
                     oneOf:
-                      - $ref: '#/components/schemas/AdminStats'
-                      - $ref: '#/components/schemas/DoctorStats'
                       - $ref: '#/components/schemas/PatientStats'
-        '401':
-          description: Nincs hitelesítve.
-        '500':
-          description: Szerver oldali statisztika hiba.
+                      - $ref: '#/components/schemas/DoctorStats'
+                      - $ref: '#/components/schemas/AdminStats'
 
   /api/users/doctors:
     get:
@@ -117,23 +115,41 @@ paths:
       summary: Orvosok listája rendelési idővel
       responses:
         '200':
-          description: Orvosok listája.
+          description: Orvosok listája a hozzájuk tartozó availabilities adatokkal.
 
   /api/users/forgot-password:
     post:
       tags: [Users]
-      summary: Elfelejtett jelszó kód kérése
+      summary: Elfelejtett jelszó kód kérése (6 jegyű kód emailben)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string, format: email }
       responses:
         '200':
-          description: Kód kiküldve.
+          description: Kód kiküldve az email címre.
 
   /api/users/reset-password:
     post:
       tags: [Users]
-      summary: Jelszó visszaállítása kóddal
+      summary: Jelszó visszaállítása a kapott kóddal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email: { type: string }
+                code: { type: string }
+                newPassword: { type: string }
       responses:
         '200':
-          description: Sikeres módosítás.
+          description: Jelszó sikeresen megváltoztatva.
 
 components:
   securitySchemes:
@@ -144,29 +160,54 @@ components:
 
   schemas:
     # --- STATISZTIKA SÉMÁK ---
-    AdminStats:
+    PatientStats:
       type: object
       properties:
-        totalUsers: { type: integer, description: "Összes regisztrált felhasználó" }
-        appointmentsToday: { type: integer, description: "Mára rögzített időpontok száma" }
-        type: { type: string, example: "System Overview" }
+        type: { type: string, example: "Patient Dashboard Summary" }
+        totalCompleted: { type: integer, description: "Sikeresen lezárt foglalások száma" }
+        totalActive: { type: integer, description: "Jövőbeli, aktív foglalások száma" }
+        healthInvestment: { type: integer, description: "Eddigi lezárt vizitek alapján számolt összeg (Ft)" }
+        nextAppointment:
+          type: object
+          nullable: true
+          properties:
+            date: { type: string, format: date-time }
+            doctor: { type: string }
+            specialization: { type: string }
+            location: { type: string }
+            topic: { type: string }
 
     DoctorStats:
       type: object
       properties:
-        uniquePatients: { type: integer, description: "Az orvoshoz tartozó egyedi páciensek száma" }
-        totalTreatments: { type: integer, description: "Lezárt (COMPLETED) vizitek száma" }
-        type: { type: string, example: "Medical Performance" }
+        type: { type: string, example: "Doctor Dashboard Summary" }
+        totalPatients: { type: integer, description: "Egyedi páciensek száma" }
+        totalCompleted: { type: integer, description: "Elvégzett (COMPLETED) kezelések száma" }
+        totalActive: { type: integer, description: "Várható jövőbeli vizitek száma" }
+        nextPatient:
+          type: object
+          nullable: true
+          properties:
+            date: { type: string, format: date-time }
+            patientName: { type: string }
+            topic: { type: string }
+            location: { type: string }
+        lastVisit:
+          type: object
+          nullable: true
+          properties:
+            date: { type: string, format: date-time }
+            patientName: { type: string }
+            topic: { type: string }
 
-    PatientStats:
+    AdminStats:
       type: object
       properties:
-        totalRecords: { type: integer, description: "Saját leletek száma" }
-        estimatedHealthInvestment: { type: integer, description: "Lezárt vizitek alapján számolt összeg" }
-        currency: { type: string, example: "Ft" }
-        type: { type: string, example: "Personal Health Summary" }
+        totalUsers: { type: integer }
+        appointmentsToday: { type: integer }
+        type: { type: string, example: "System Overview" }
 
-    # --- ÁLTALÁNOS SÉMÁK ---
+    # --- USER / AUTH SÉMÁK ---
     UserRegister:
       type: object
       required: [name, email, password, phone, birthDate, gender]
@@ -205,7 +246,7 @@ components:
             phone: { type: string }
             tajNumber: { type: string, nullable: true }
             address: { type: string, nullable: true }
-            birthDate: { type: string, format: date }
+            birthDate: { type: string }
             gender: { type: string }
             role: { type: string }
             specialization: { type: string, nullable: true }

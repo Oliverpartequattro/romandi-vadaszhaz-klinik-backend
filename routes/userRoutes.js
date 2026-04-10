@@ -320,58 +320,112 @@ router.post('/reset-password', async (req, res) => {
     res.json({ message: "Jelszó sikeresen megváltoztatva!" });
 });
 
-// @desc    Személyre szabott statisztikák (Admin, Orvos, Páciens)
+// @desc    Személyre szabott statisztikák (Orvos, Páciens)
 // @route   GET /api/users/stats/me
 // @access  Private
 router.get('/stats/me', protect, async (req, res, next) => {
     try {
         const userId = req.user._id;
         const role = req.user.role;
+        const now = new Date();
         let personalStats = {};
 
-        if (role === 'ADMIN') {
-            // A korábbi globális admin statisztika jön ide
-            const [totalUsers, appointmentsToday] = await Promise.all([
+        if (role === 'PATIENT') {
+            // 1. Összes foglalás lekérése adatokkal
+            const allApps = await Appointment.find({ patient_id: userId })
+                .populate('doctor_id', 'name specialization')
+                .populate('service_id', 'topic location price')
+                .sort({ startTime: 1 });
+
+            // 2. Szűrések a kért kategóriák szerint
+            const completedApps = allApps.filter(app => app.status === 'COMPLETED');
+            const activeApps = allApps.filter(app => 
+                new Date(app.startTime) > now && ['PENDING', 'ACCEPTED', 'PROPOSED'].includes(app.status)
+            );
+            
+            // 3. Következő időpont meghatározása
+            const nextApp = allApps.find(app => 
+                new Date(app.startTime) > now && app.status === 'ACCEPTED'
+            );
+
+            // 4. Páciens specifikus stat objektum
+            personalStats = {
+                type: 'Patient Dashboard Summary',
+                totalCompleted: completedApps.length,
+                totalActive: activeApps.length,
+                nextAppointment: nextApp ? {
+                    date: nextApp.startTime,
+                    doctor: nextApp.doctor_id?.name,
+                    specialization: nextApp.doctor_id?.specialization,
+                    location: nextApp.service_id?.location,
+                    topic: nextApp.service_id?.topic
+                } : null,
+                // Becsült költés (ha van árazás a szolgáltatásnál)
+                healthInvestment: completedApps.reduce((sum, app) => {
+                    const price = parseInt(app.service_id?.price?.replace(/[^0-9]/g, '')) || 0;
+                    return sum + price;
+                }, 0)
+            };
+
+        } else if (role === 'DOCTOR') {
+            // 1. Orvos összes foglalása
+            const allApps = await Appointment.find({ doctor_id: userId })
+                .populate('patient_id', 'name phone email')
+                .populate('service_id', 'topic location')
+                .sort({ startTime: 1 });
+
+            // 2. Szűrések
+            const completedApps = allApps.filter(app => app.status === 'COMPLETED');
+            const activeApps = allApps.filter(app => 
+                new Date(app.startTime) > now && ['PENDING', 'ACCEPTED', 'PROPOSED'].includes(app.status)
+            );
+            const uniquePatients = await Appointment.distinct('patient_id', { doctor_id: userId });
+
+            // 3. Következő páciens
+            const nextApp = allApps.find(app => 
+                new Date(app.startTime) > now && app.status === 'ACCEPTED'
+            );
+
+            // 4. Legutóbbi vizit
+            const lastApp = [...allApps]
+                .reverse()
+                .find(app => app.status === 'COMPLETED' || new Date(app.startTime) < now);
+
+            // 5. Orvos specifikus stat objektum
+            personalStats = {
+                type: 'Doctor Dashboard Summary',
+                totalPatients: uniquePatients.length,
+                totalCompleted: completedApps.length,
+                totalActive: activeApps.length,
+                nextPatient: nextApp ? {
+                    date: nextApp.startTime,
+                    patientName: nextApp.patient_id?.name,
+                    topic: nextApp.service_id?.topic,
+                    location: nextApp.service_id?.location
+                } : null,
+                lastVisit: lastApp ? {
+                    date: lastApp.startTime,
+                    patientName: lastApp.patient_id?.name,
+                    topic: lastApp.service_id?.topic
+                } : null
+            };
+        } else if (role === 'ADMIN') {
+             // Admin marad a régi vagy bővíthető, ha szükséges
+             const [totalUsers, appointmentsToday] = await Promise.all([
                 User.countDocuments(),
                 Appointment.countDocuments({ startTime: { $gte: new Date().setHours(0,0,0,0) } })
             ]);
             personalStats = { totalUsers, appointmentsToday, type: 'System Overview' };
-
-        } else if (role === 'DOCTOR') {
-            // Orvosi statisztika: Saját páciensek és lezárt vizitek
-            const [myPatients, completedAppointments] = await Promise.all([
-                Appointment.distinct('patient_id', { doctor_id: userId }),
-                Appointment.countDocuments({ doctor_id: userId, status: 'COMPLETED' })
-            ]);
-            personalStats = { 
-                uniquePatients: myPatients.length, 
-                totalTreatments: completedAppointments,
-                type: 'Medical Performance' 
-            };
-
-        } else if (role === 'PATIENT') {
-            // Páciens statisztika: Saját leletek és elköltött összeg (becsült)
-            const [myRecords, myAppointments] = await Promise.all([
-                User.findById(userId).select('records'),
-                Appointment.find({ patient_id: userId, status: 'COMPLETED' }).populate('service_id')
-            ]);
-            
-            const moneySpent = myAppointments.reduce((sum, app) => {
-                const price = parseInt(app.service_id?.price?.replace(/[^0-9]/g, '')) || 0;
-                return sum + price;
-            }, 0);
-
-            personalStats = { 
-                totalRecords: myRecords.records.length, 
-                estimatedHealthInvestment: moneySpent,
-                currency: "Ft",
-                type: 'Personal Health Summary' 
-            };
         }
 
-        res.status(200).json({ success: true, stats: personalStats });
+        res.status(200).json({ 
+            success: true, 
+            role: role,
+            stats: personalStats 
+        });
+
     } catch (error) {
-        next(new ErrorResponse("Statisztika hiba", 500));
+        next(new ErrorResponse("Hiba a statisztikák előállítása során", 500));
     }
 });
 
