@@ -87,22 +87,29 @@ paths:
       tags: [Stats]
       summary: Személyre szabott statisztikák lekérése
       description: |
-        Szerepkörtől függő statisztika:
-        - Admin: Rendszer szintű adatok.
-        - Doctor: Saját páciensek és kezelések száma.
-        - Patient: Leletek száma és becsült egészségügyi befektetés.
+        A bejelentkezett felhasználó szerepköre alapján eltérő statisztikai adatokat ad vissza.
       security:
         - bearerAuth: []
       responses:
         '200':
-          description: Statisztikai adatok objektuma.
+          description: Sikeres lekérdezés.
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  success: { type: boolean }
-                  stats: { type: object }
+                  success:
+                    type: boolean
+                    example: true
+                  stats:
+                    oneOf:
+                      - $ref: '#/components/schemas/AdminStats'
+                      - $ref: '#/components/schemas/DoctorStats'
+                      - $ref: '#/components/schemas/PatientStats'
+        '401':
+          description: Nincs hitelesítve.
+        '500':
+          description: Szerver oldali statisztika hiba.
 
   /api/users/doctors:
     get:
@@ -136,6 +143,30 @@ components:
       bearerFormat: JWT
 
   schemas:
+    # --- STATISZTIKA SÉMÁK ---
+    AdminStats:
+      type: object
+      properties:
+        totalUsers: { type: integer, description: "Összes regisztrált felhasználó" }
+        appointmentsToday: { type: integer, description: "Mára rögzített időpontok száma" }
+        type: { type: string, example: "System Overview" }
+
+    DoctorStats:
+      type: object
+      properties:
+        uniquePatients: { type: integer, description: "Az orvoshoz tartozó egyedi páciensek száma" }
+        totalTreatments: { type: integer, description: "Lezárt (COMPLETED) vizitek száma" }
+        type: { type: string, example: "Medical Performance" }
+
+    PatientStats:
+      type: object
+      properties:
+        totalRecords: { type: integer, description: "Saját leletek száma" }
+        estimatedHealthInvestment: { type: integer, description: "Lezárt vizitek alapján számolt összeg" }
+        currency: { type: string, example: "Ft" }
+        type: { type: string, example: "Personal Health Summary" }
+
+    # --- ÁLTALÁNOS SÉMÁK ---
     UserRegister:
       type: object
       required: [name, email, password, phone, birthDate, gender]
@@ -178,10 +209,10 @@ components:
             gender: { type: string }
             role: { type: string }
             specialization: { type: string, nullable: true }
-        nextAppointment: { type: object, nullable: true, description: "A legközelebbi jövőbeli ACCEPTED időpont" }
-        appointments: { type: array, items: { type: object }, description: "Az összes időpont" }
-        records: { type: array, items: { type: object }, description: "Az összes lelet csökkenő időrendben" }
-        availabilities: { type: array, items: { type: object }, description: "Orvosok esetén a rendelési idők" }
+        nextAppointment: { type: object, nullable: true }
+        appointments: { type: array, items: { type: object } }
+        records: { type: array, items: { type: object } }
+        availabilities: { type: array, items: { type: object } }
         stats:
           type: object
           properties:
