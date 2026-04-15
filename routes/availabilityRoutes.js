@@ -82,6 +82,33 @@ router.get("/my", protect, doctorOrAdmin, async (req, res, next) => {
   }
 });
 
+// @desc    2.1 Egy konkrét orvos rendelési idejének lekérése ID alapján
+// @route   GET /api/availability/doctor/:doctorId
+// @access  Public (vagy Private, igény szerint)
+router.get("/doctor/:doctorId", async (req, res, next) => {
+  try {
+    const availabilities = await Availability.find({ doctor: req.params.doctorId });
+
+    if (!availabilities || availabilities.length === 0) {
+      // Opcionális: eldöntheted, hogy 404-et dobsz, vagy csak üres tömböt adsz vissza
+      return res.json({
+        success: true,
+        count: 0,
+        data: []
+      });
+    }
+
+    res.json({
+      success: true,
+      count: availabilities.length,
+      data: availabilities,
+    });
+  } catch (error) {
+    // Kezeli, ha érvénytelen a formátuma a doctorId-nak (mongoose CastError)
+    next(error);
+  }
+});
+
 // @desc    3. Rendelési idő törlése
 // @route   DELETE /api/availability/:id
 router.delete("/:id", protect, doctorOrAdmin, async (req, res, next) => {
