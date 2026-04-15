@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: Romándi Vadászház Klinik - Orvosi Elérhetőség API
-  version: "1.1.0"
+  version: "1.2.0"
   description: |
     Ez a modul az orvosok heti rendelési idejének kezeléséért felel. 
     Segítségével beállítható, hogy az orvos mely napokon, mettől meddig fogad pácienseket, 
@@ -31,11 +31,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/AvailabilityCreate'
-            example:
-              dayOfWeek: "Hétfő"
-              startTime: "08:00"
-              endTime: "16:30"
-              slotDuration: 30
       responses:
         '201':
           description: Rendelési idő sikeresen létrehozva.
@@ -47,13 +42,9 @@ paths:
                   success: { type: boolean, example: true }
                   data: { $ref: '#/components/schemas/AvailabilityResponse' }
         '400':
-          description: Validációs hiba (pl. rossz formátum vagy a nap már létezik).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+          description: Validációs hiba.
         '403':
-          description: Nincs jogosultság (pl. PATIENT próbál idősávot létrehozni).
+          description: Nincs jogosultság.
 
   /api/availability/my:
     get:
@@ -77,6 +68,37 @@ paths:
                     items:
                       $ref: '#/components/schemas/AvailabilityResponse'
 
+  /api/availability/doctor/{doctorId}:
+    get:
+      tags: [Availability]
+      summary: Egy konkrét orvos rendelési idejének lekérése ID alapján
+      description: |
+        Lekéri az adott orvoshoz (User ID) tartozó összes elérhetőségi bejegyzést.
+        Ez a végpont általában publikus, hogy a páciensek láthassák a szabad sávokat.
+      parameters:
+        - in: path
+          name: doctorId
+          required: true
+          schema:
+            type: string
+          description: Az orvos (User) egyedi azonosítója.
+      responses:
+        '200':
+          description: Sikeres lekérdezés.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  count: { type: integer, example: 2 }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AvailabilityResponse'
+        '404':
+          description: Az orvoshoz nem tartoznak rögzített időpontok.
+
   /api/availability/{id}:
     delete:
       tags: [Availability]
@@ -84,7 +106,6 @@ paths:
       description: |
         Töröl egy konkrét napot az azonosító alapján. 
         Orvos csak a sajátját, Admin bármelyiket törölheti. 
-        A törlés során a User modellben lévő hivatkozás is automatikusan eltávolításra kerül.
       security:
         - bearerAuth: []
       parameters:
@@ -97,17 +118,10 @@ paths:
       responses:
         '200':
           description: Sikeres törlés.
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success: { type: boolean, example: true }
-                  message: { type: string, example: "Rendelési idő sikeresen törölve" }
         '403':
-          description: Nincs jogosultság más orvos naptárát törölni.
+          description: Nincs jogosultság.
         '404':
-          description: A megadott azonosítóval nem található rendelési idő.
+          description: Nem található.
 
 components:
   securitySchemes:
@@ -123,7 +137,7 @@ components:
       properties:
         dayOfWeek:
           type: string
-          description: A hét napja (magyarul vagy angolul, a rendszer magyarosítja).
+          description: A hét napja.
           enum: [Hétfő, Kedd, Szerda, Csütörtök, Péntek, Szombat, Vasárnap, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY]
           example: "Kedd"
         startTime:
@@ -142,16 +156,12 @@ components:
           default: 30
           description: Egy vizsgálat hossza percekben.
           example: 20
-        isActive:
-          type: boolean
-          default: true
-          description: Ha hamis, az időpontfoglalás ezen a napon szünetel.
 
     AvailabilityResponse:
       type: object
       properties:
         _id: { type: string, example: "65d9c8e7f123abc456789012" }
-        doctor: { type: string, description: "Az orvos User ID-ja", example: "65d9c123f123abc456789abc" }
+        doctor: { type: string, example: "65d9c123f123abc456789abc" }
         dayOfWeek: { type: string, example: "Hétfő" }
         startTime: { type: string, example: "08:00" }
         endTime: { type: string, example: "16:00" }
@@ -164,4 +174,4 @@ components:
       type: object
       properties:
         success: { type: boolean, example: false }
-        message: { type: string, example: "Kedd napra már van beállított rendelési időd!" }
+        message: { type: string, example: "Hibaüzenet leírása" }
