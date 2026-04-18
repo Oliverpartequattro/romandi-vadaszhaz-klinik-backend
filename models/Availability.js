@@ -26,17 +26,28 @@ const availabilitySchema = new mongoose.Schema({
   },
   slotDuration: {
     type: Number,
-    default: 30, // Alapértelmezett 30 perces vizsgálatok
+    default: 30,
     min: [10, "A vizsgálat legalább 10 perces kell legyen"]
   },
   isActive: {
     type: Boolean,
-    default: true // Ha az orvos beteg, ezt false-ra állítva kikapcsolható a foglalás
+    default: true
   }
 }, { timestamps: true });
 
 // Megakadályozzuk, hogy egy orvosnak egy napra két rendelési ideje legyen
 availabilitySchema.index({ doctor: 1, dayOfWeek: 1 }, { unique: true });
+
+// --- VALIDÁCIÓ: Start és End idő összehasonlítása ---
+availabilitySchema.pre('validate', function(next) {
+  if (this.startTime && this.endTime) {
+    // String összehasonlítás: "08:00" < "16:00" igaz
+    if (this.startTime >= this.endTime) {
+      return next(new Error("A rendelés vége nem lehet korábbi vagy egyenlő a kezdettel (startTime >= endTime)"));
+    }
+  }
+  next();
+});
 
 const Availability = mongoose.model('Availability', availabilitySchema);
 export default Availability;

@@ -1,7 +1,7 @@
 ### Változók definiálása
 @baseUrl = http://localhost:3000/api
 # Éles teszteléshez:
-@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1. Adatbázis teljes ürítése (Item-by-item törlés logolva)
 DELETE {{baseUrl}}/admin/reset-db
