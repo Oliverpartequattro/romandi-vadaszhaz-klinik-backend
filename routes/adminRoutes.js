@@ -81,8 +81,8 @@ router.post('/seed', async (req, res) => {
         const now = new Date();
         const appointmentsData = [
             // MÚLTBELI (már lezajlott)
-            { doctor_id: doc1._id, patient_id: pat1._id, service_id: createdServices[0]._id, startTime: new Date(Date.now() + 1000 * 60 * 60 * 5), status: 'COMPLETED', referral_type: 'SELF', created_by: pat1._id },
-            { doctor_id: doc2._id, patient_id: pat1._id, service_id: createdServices[2]._id, startTime: new Date(Date.now() + 1000 * 60 * 60 *   5), status: 'COMPLETED', referral_type: 'SELF', created_by: pat1._id },
+            { doctor_id: doc1._id, patient_id: pat1._id, service_id: createdServices[0]._id, startTime: new Date(Date.now() - 1000 * 60 * 60 * 5), status: 'COMPLETED', referral_type: 'SELF', created_by: pat1._id },
+            { doctor_id: doc2._id, patient_id: pat1._id, service_id: createdServices[2]._id, startTime: new Date(Date.now() - 1000 * 60 * 60 *   5), status: 'COMPLETED', referral_type: 'SELF', created_by: pat1._id },
             
             // JELENLEGI / MAI
             { doctor_id: doc3._id, patient_id: pat1._id, service_id: createdServices[3]._id, startTime: new Date(now.getTime() + 3600000 * 2), status: 'ACCEPTED', referral_type: 'DOCTOR', referred_by: doc1._id, created_by: doc1._id },
