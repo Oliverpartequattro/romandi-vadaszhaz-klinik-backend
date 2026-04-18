@@ -29,7 +29,7 @@ export const getHungarianDay = (input) => {
   const lowerInput = input.toLowerCase();
   return englishToHungarian[lowerInput] || input; // Ha nincs találat, visszaadjuk az eredetit
 };
-// @desc    1. Új rendelési idő hozzáadása
+// @desc    1. Rendelési idő hozzáadása vagy frissítése (Upsert)
 // @route   POST /api/availability
 // @access  Private (Orvos vagy Admin)
 router.post("/", protect, doctorOrAdmin, async (req, res, next) => {
@@ -40,28 +40,50 @@ router.post("/", protect, doctorOrAdmin, async (req, res, next) => {
     // --- Átalakítás magyar napra ---
     dayOfWeek = getHungarianDay(dayOfWeek);
 
-    // Ellenőrizzük, van-e már beállítva rendelési idő erre a napra
+    // 1. Megnézzük, létezik-e már az adott napra időpont
     const existingAvailability = await Availability.findOne({
       doctor: doctorId,
       dayOfWeek,
     });
 
-    const availability = await Availability.create({
-      doctor: doctorId,
-      dayOfWeek,
-      startTime,
-      endTime,
-      slotDuration,
-    });
+    if (existingAvailability) {
+      // --- FRISSÍTÉS ---
+      // A .set() és .save() metódusok elindítják a Mongoose validátorokat is
+      existingAvailability.set({
+        startTime,
+        endTime,
+        slotDuration,
+      });
+      
+      await existingAvailability.save();
 
-    await User.findByIdAndUpdate(doctorId, {
-      $push: { availabilities: availability._id },
-    });
+      res.status(200).json({
+        success: true,
+        message: "Rendelési idő frissítve.",
+        data: existingAvailability,
+      });
 
-    res.status(201).json({
-      success: true,
-      data: availability,
-    });
+    } else {
+      // --- LÉTREHOZÁS ---
+      const availability = await Availability.create({
+        doctor: doctorId,
+        dayOfWeek,
+        startTime,
+        endTime,
+        slotDuration,
+      });
+
+      // $addToSet: csak akkor adja hozzá, ha még nincs benne az ID (duplikáció megelőzése)
+      await User.findByIdAndUpdate(doctorId, {
+        $addToSet: { availabilities: availability._id },
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Rendelési idő létrehozva.",
+        data: availability,
+      });
+    }
   } catch (error) {
     next(error);
   }
