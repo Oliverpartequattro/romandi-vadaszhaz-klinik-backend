@@ -298,26 +298,52 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 router.post('/reset-password', async (req, res) => {
-    const { email, code, newPassword } = req.body;
+    // 1. Kiegészítettük a confirmPassword mezővel
+    const { email, code, newPassword, confirmPassword } = req.body;
 
-    const user = await User.findOne({
-        email,
-        resetPasswordCode: code,
-        resetPasswordExpires: { $gt: Date.now() } // Ellenőrizzük, hogy nem járt-e le
-    });
-
-    if (!user) {
-        return res.status(400).json({ message: "Érvénytelen vagy lejárt kód!" });
+    // 2. Ellenőrzés: Egyeznek-e a jelszavak?
+    if (newPassword !== confirmPassword) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "A megadott két jelszó nem egyezik!" 
+        });
     }
 
-    // Új jelszó beállítása (a pre-save hook titkosítani fogja!)
-    user.password = newPassword;
-    user.resetPasswordCode = undefined; // Töröljük a használt kódot
-    user.resetPasswordExpires = undefined;
-    
-    await user.save();
+    // 3. Ellenőrzés: Túl rövid-e a jelszó (Opcionális, de ajánlott)
+    if (newPassword.length < 8) {
+        return res.status(400).json({ 
+            success: false, 
+            message: "A jelszónak legalább 8 karakter hosszúnak kell lennie!" 
+        });
+    }
 
-    res.json({ message: "Jelszó sikeresen megváltoztatva!" });
+    try {
+        const user = await User.findOne({
+            email,
+            resetPasswordCode: code,
+            resetPasswordExpires: { $gt: Date.now() } 
+        });
+
+        if (!user) {
+            return res.status(400).json({ 
+                success: false, 
+                message: "Érvénytelen vagy lejárt kód!" 
+            });
+        }
+
+        // Új jelszó beállítása
+        user.password = newPassword;
+        user.resetPasswordCode = undefined; 
+        user.resetPasswordExpires = undefined;
+        
+        await user.save();
+
+        res.json({ success: true, message: "Jelszó sikeresen megváltoztatva!" });
+        
+    } catch (error) {
+        console.error("Hiba a jelszó visszaállításakor:", error);
+        res.status(500).json({ success: false, message: "Szerverhiba történt." });
+    }
 });
 
 // @desc    Személyre szabott statisztikák (Orvos, Páciens)
