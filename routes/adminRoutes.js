@@ -67,7 +67,7 @@ router.post('/seed', async (req, res) => {
 
         // 1. Felhasználók (Admin, 3 Orvos, 3 Páciens)
         const usersData = [
-            { name: "Admin Olivér", email: "admin@gmail.com", password: "doktorcigany2", role: "ADMIN", phone: "06301111111", birthDate: "1985-01-01", gender: "MALE" },
+            // { name: "Admin Olivér", email: "admin@gmail.com", password: "doktorcigany2", role: "ADMIN", phone: "06301111111", birthDate: "1985-01-01", gender: "MALE" },
             { name: "Dr. Szemethy Levente", email: "doktor@gmail.com", password: "doktorcigany2", role: "DOCTOR", specialization: "Proktológia", phone: "06701111111", birthDate: "1970-05-15", gender: "MALE" },
             { name: "Dr. Süke Benedek", email: "suke@gmail.com", password: "doktorcigany2", role: "DOCTOR", specialization: "Ortopédia", phone: "06702222222", birthDate: "1980-10-10", gender: "MALE" },
             { name: "Dr. Csöngető Csongor", email: "csongeto@gmail.com", password: "doktorcigany2", role: "DOCTOR", specialization: "Onkológia", phone: "06703333333", birthDate: "1975-12-12", gender: "MALE" },
