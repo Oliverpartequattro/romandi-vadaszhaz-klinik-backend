@@ -35,8 +35,6 @@ const availabilitySchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Megakadályozzuk, hogy egy orvosnak egy napra két rendelési ideje legyen
-availabilitySchema.index({ doctor: 1, dayOfWeek: 1 }, { unique: true });
 
 const Availability = mongoose.model('Availability', availabilitySchema);
 export default Availability;
