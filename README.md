@@ -45,6 +45,57 @@ A rendszer közös modellt használ, de a validáció intelligens: a `role` alap
 
 ---
 
+## 👨‍💼 Admin Funkciók
+
+Az admin végpontok csak adminisztrátori jogosultsággal elérhető funkciókat biztosítanak az adatbázis és rendszer kezeléséhez.
+
+**Admin végpontok base URL:** `POST/GET/PUT/DELETE /api/admin/*`
+
+### Admin Végpontok Áttekintése
+
+| Végpont | Módszer | Leírás |
+|---------|---------|--------|
+| `/reset-db` | DELETE | Adatbázis teljes törlése (adminok megmaradnak) |
+| `/seed` | POST | Mintaadatok feltöltése (7 user, 4 service, 7 appointment) |
+| `/stats` | GET | Rendszerstatisztikák (felhasználók, mai időpontok, bevétel) |
+| `/users` | GET | Összes felhasználó listázása |
+| `/users/:id` | PUT | Felhasználó szerkesztése |
+| `/users/:id` | DELETE | Felhasználó törlése |
+| `/services` | GET | Összes szolgáltatás listázása |
+| `/services/:id` | PUT | Szolgáltatás szerkesztése |
+| `/services/:id` | DELETE | Szolgáltatás törlése |
+| `/appointments` | GET | Összes időpont listázása |
+| `/appointments/:id` | PUT | Időpont szerkesztése |
+| `/appointments/:id` | DELETE | Időpont törlése |
+
+### Admin Funkciók Részletesen
+
+**1. Adatbázis Visszaállítása**
+```bash
+DELETE /api/admin/reset-db
+```
+Törli az összes adatot, kivéve az admin felhasználókat. Csak fejlesztésben és tesztelésben használjuk!
+
+**2. Mintaadatok Feltöltése**
+```bash
+POST /api/admin/seed
+```
+Feltölti az adatbázist 7 felhasználóval (1 admin, 3 orvos, 3 páciens), 4 szolgáltatással, 7 időponttal és 2 lelete
+
+**3. Rendszer Statisztikák**
+```bash
+GET /api/admin/stats
+```
+Lekéri az alapvető rendszerstatisztikákat: felhasználók száma, mai időpontok, legnépszerűbb szolgáltatások, becsült bevétel.
+
+**4-12. Felhasználók, Szolgáltatások és Időpontok CRUD Operációi**
+
+Admin teljes hozzáféréssel rendelkezik az összes adat módosításához és törléséhez.
+
+📖 **Teljes admin dokumentáció:** Lásd [Admin Útmutató](docs/adminUtmutato.md)
+
+---
+
 ## 🩺 Szolgáltatások és Idősávok (Services)
 
 A `Service` nálad nem egy statikus lista, hanem az orvosok által meghirdetett **szabad időpontok**.
@@ -259,4 +310,11 @@ export default User;
 
 ---
 
-*Utolsó frissítés: 2026. március 24.*
+## 📚 Dokumentációs Fájlok
+
+- **Admin Útmutató:** [adminUtmutato.md](docs/adminUtmutato.md) - Teljes admin funkciókat leíró útmutató magyar nyelven
+- **Admin Routes API:** [adminRoutes.md](docs/adminRoutes.md) - Admin végpontok API dokumentációja
+
+---
+
+*Utolsó frissítés: 2026. április 20.*
