@@ -3,8 +3,12 @@ import User from '../models/User.js';
 import Appointment from '../models/Appointment.js';
 import Record from '../models/Record.js';
 import Service from '../models/Service.js';
+import { protect, admin } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+
+// --- VÉDELEM: Minden itt következő route ADMIN jogot igényel ---
+router.use(protect, admin);
 
 router.delete('/reset-db', async (req, res) => {
     try {
@@ -191,6 +195,93 @@ router.get('/stats', async (req, res) => {
     } catch (error) {
         console.error("❌ Stats Error:", error.message);
         res.status(500).json({ message: "Hiba a statisztikák lekérésekor", error: error.message });
+    }
+});
+
+// --- 2. FELHASZNÁLÓKEZELÉS (CRUD) ---
+// Összes felhasználó jelszóval (DEBUG ONLY!)
+router.get('/users', async (req, res) => {
+    try {
+        const users = await User.find({}).select('+password');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a felhasználók listázásakor" });
+    }
+});
+
+// Felhasználó szerkesztése
+router.put('/users/:id', async (req, res) => {
+    try {
+        const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+        res.json(updatedUser);
+    } catch (error) {
+        res.status(400).json({ message: "Hiba a módosítás során" });
+    }
+});
+
+// Felhasználó törlése
+router.delete('/users/:id', async (req, res) => {
+    try {
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ message: "Felhasználó törölve" });
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a törlés során" });
+    }
+});
+
+// --- 3. SZOLGÁLTATÁSOK KEZELÉSE (CRUD) ---
+router.get('/services', async (req, res) => {
+    try {
+        const services = await Service.find({}).populate('doctor_id', 'name');
+        res.json(services);
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a szolgáltatások listázásakor" });
+    }
+});
+
+router.put('/services/:id', async (req, res) => {
+    try {
+        const updatedService = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updatedService);
+    } catch (error) {
+        res.status(400).json({ message: "Hiba a szolgáltatás módosításakor" });
+    }
+});
+
+router.delete('/services/:id', async (req, res) => {
+    try {
+        await Service.findByIdAndDelete(req.params.id);
+        res.json({ message: "Szolgáltatás törölve" });
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a törlés során" });
+    }
+});
+
+// --- 4. IDŐPONTOK KEZELÉSE (CRUD) ---
+router.get('/appointments', async (req, res) => {
+    try {
+        const apps = await Appointment.find({}).populate('patient_id doctor_id service_id');
+        res.json(apps);
+    } catch (error) {
+        res.status(500).json({ message: "Hiba az időpontok listázásakor" });
+    }
+});
+
+router.put('/appointments/:id', async (req, res) => {
+    try {
+        const updatedApp = await Appointment.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.json(updatedApp);
+    } catch (error) {
+        res.status(400).json({ message: "Hiba az időpont módosításakor" });
+    }
+});
+
+router.delete('/appointments/:id', async (req, res) => {
+    try {
+        await Appointment.findByIdAndDelete(req.params.id);
+        res.json({ message: "Időpont törölve" });
+    } catch (error) {
+        res.status(500).json({ message: "Hiba a törlés során" });
     }
 });
 
