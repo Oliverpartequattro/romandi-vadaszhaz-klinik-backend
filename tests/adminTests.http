@@ -1,16 +1,40 @@
 ### Változók definiálása
 @baseUrl = http://localhost:3000/api
-# Éles teszteléshez:
+###VERCEL
 ###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
-### 1. Adatbázis teljes ürítése (Item-by-item törlés logolva)
-DELETE {{baseUrl}}/admin/reset-db
+### 1. ADMIN BEJELENTKEZÉS ÉS TOKEN MENTÉS
+# @name adminLogin
+POST {{baseUrl}}/users/login
 Content-Type: application/json
 
-### 2. Magyar nyelvű tesztadatok betöltése (Seed)
-POST {{baseUrl}}/admin/seed
-Content-Type: application/json
+{
+    "email": "admin@gmail.com",
+    "password": "doktorcigany2"
+}
 
-### 3. Admin Statisztikák lekérése
+### --- INNENTŐL NEM KELL TÖBBET BEÍRNI A TOKENT ---
+
+### 2. Admin Statisztikák lekérése
 GET {{baseUrl}}/admin/stats
-Content-Type: application/json
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+### 3. Összes felhasználó listázása
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+### 4. Szolgáltatások listázása
+GET {{baseUrl}}/admin/services
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+### 5. Időpontok listázása
+GET {{baseUrl}}/admin/appointments
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+### 6. Adatbázis teljes ürítése
+DELETE {{baseUrl}}/admin/reset-db
+Authorization: Bearer {{adminLogin.response.body.token}}
+
+### 7. Magyar nyelvű tesztadatok betöltése (Seed)
+POST {{baseUrl}}/admin/seed
+Authorization: Bearer {{adminLogin.response.body.token}}

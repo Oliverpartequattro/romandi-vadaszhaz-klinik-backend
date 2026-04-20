@@ -20,14 +20,15 @@ Content-Type: application/json
 
 {
     "name": "Kapocsi Hunor László",
-    "email": "suekebenedek2@gmail.com",
+    "email": "admin@gmail.com",
     "password": "doktorcigany2",
     "phone": "+36709998877",
-    "address": "9024, Győr, Nádor utca 11",
+    "address": "9024 Győr, Nádor utca 11",
     "specialization": "Végbéltan",
     "birthDate": "1990-01-01",
     "tajNumber": "666666666",
-    "role": "PATIENT"
+    "gender": "MALE",
+    "role": "ADMIN"
 }
  
 

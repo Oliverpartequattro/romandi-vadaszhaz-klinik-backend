@@ -27,11 +27,18 @@ router.delete('/reset-db', async (req, res) => {
             const items = await model.schema.find({});
             console.log(`\n--- Deleting ${model.name}s (${items.length} found) ---`);
             
-            summary[model.name] = items.length;
+            summary[model.name] = { deleted: 0, skipped: 0 };
 
             for (const item of items) {
+                // ITT A VÉDELEM: Ha User modellről van szó és ADMIN, akkor kihagyjuk a törlést
+                if (model.name === 'User' && item.role === 'ADMIN') {
+                    console.log(`🛡️ SKIPPED Admin: ${item.name} (${item._id})`);
+                    summary[model.name].skipped++;
+                    continue; // Ugrás a következő elemre
+                }
+
                 await model.schema.findByIdAndDelete(item._id);
-                // Itt írjuk ki egyenként a törölt adatokat
+                summary[model.name].deleted++;
                 console.log(`🗑️ Deleted ${model.name}: ID ${item._id} ${item.name || item.topic || ''}`);
             }
         }
@@ -39,7 +46,7 @@ router.delete('/reset-db', async (req, res) => {
         console.log("\n--- ✅ DETAILED RESET COMPLETED ---");
 
         res.status(200).json({
-            message: "Database wiped item by item.",
+            message: "Database wiped, admins preserved.",
             summary: summary
         });
     } catch (error) {
@@ -85,8 +92,8 @@ router.post('/seed', async (req, res) => {
         const now = new Date();
         const appointmentsData = [
             // MÚLTBELI (már lezajlott)
-            { doctor_id: doc1._id, patient_id: pat1._id, service_id: createdServices[0]._id, startTime: new Date(Date.now() + 1000), status: 'COMPLETED', referral_type: 'SELF', created_by: pat1._id },
-            { doctor_id: doc2._id, patient_id: pat1._id, service_id: createdServices[2]._id, startTime: new Date(Date.now() + 1000), status: 'COMPLETED', referral_type: 'SELF', created_by: pat1._id },
+            { doctor_id: doc1._id, patient_id: pat1._id, service_id: createdServices[0]._id, startTime: new Date(Date.now() + 1000), status: 'ACCEPTED', referral_type: 'SELF', created_by: pat1._id },
+            { doctor_id: doc2._id, patient_id: pat1._id, service_id: createdServices[2]._id, startTime: new Date(Date.now() + 1000), status: 'ACCEPTED', referral_type: 'SELF', created_by: pat1._id },
             
             // JELENLEGI / MAI
             { doctor_id: doc3._id, patient_id: pat1._id, service_id: createdServices[3]._id, startTime: new Date(now.getTime() + 3600000 * 2), status: 'ACCEPTED', referral_type: 'DOCTOR', referred_by: doc1._id, created_by: doc1._id },
