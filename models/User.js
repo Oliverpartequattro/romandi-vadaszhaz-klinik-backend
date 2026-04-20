@@ -85,7 +85,7 @@ const userSchema = new mongoose.Schema(
           }
           return age >= 0 && age <= 110;
         },
-        message: "Érvénytelen születési dátum. Példa: 1990-05-14"
+        message: "A születési dátum nem lehet a jövőben és a felhasználó nem lehet 110 évnél idősebb."
       }
     },
 
