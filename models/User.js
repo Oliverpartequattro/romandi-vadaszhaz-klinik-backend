@@ -1,27 +1,55 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
+// --- SANITIZE + VALIDATION HELPERS ---
+
+const sanitizeString = (value) => {
+  if (!value) return value;
+
+  return value
+    .normalize("NFKC")
+    .replace(/[\u0300-\u036f]/g, "") // zalgo
+    .replace(/[\u{1F600}-\u{1F6FF}]/gu, "") // emoji
+    .replace(/[\u{1F300}-\u{1F5FF}]/gu, "")
+    .replace(/[\u{1F900}-\u{1F9FF}]/gu, "")
+    .replace(/[\u{2600}-\u{26FF}]/gu, "")
+    .replace(/[\u{2700}-\u{27BF}]/gu, "")
+    .replace(/[^\p{L}\p{N}\s.,\-@]/gu, "")
+    .trim();
+};
+
+const safeTextRegex = /^[\p{L}\p{N}\s.,\-@]+$/u;
+
 const userSchema = new mongoose.Schema(
   {
     resetPasswordCode: String,
     resetPasswordExpires: Date,
-  name: {
+
+    name: {
       type: String,
       required: [true, "Név megadása kötelező"],
       trim: true,
-      minlength: [3, "A névnek legalább 3 karakterből kell állnia"], // Extra biztonság
-      maxlength: [50, "A név nem lehet hosszabb 50 karakternél"], // EZT KÉRTED
+      set: sanitizeString,
+      minlength: [3, "A névnek legalább 3 karakterből kell állnia. Példa: Kovács János"],
+      maxlength: [50, "A név nem lehet hosszabb 50 karakternél"],
+      validate: {
+        validator: (v) => safeTextRegex.test(v),
+        message: "Érvénytelen karakter a névben. Példa: Kovács János"
+      }
     },
+
     email: {
       type: String,
       required: [true, "Email megadása kötelező"],
       unique: true,
       lowercase: true,
+      set: sanitizeString,
       match: [
-        /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/,
-        "Kérjük, érvényes email címet adjon meg",
+        /^[a-zA-Z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i,
+        "Érvénytelen email. Példa: teszt@email.hu"
       ],
     },
+
     password: {
       type: String,
       required: [true, "Jelszó megadása kötelező"],
@@ -30,19 +58,21 @@ const userSchema = new mongoose.Schema(
           if (!this.isModified("password")) return true;
           return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,}$/.test(v);
         },
-        message: "A jelszónak legalább 8 karakterből kell állnia, és tartalmaznia kell betűt és számot is",
+        message: "A jelszó legalább 8 karakter, tartalmazzon betűt és számot. Példa: Teszt1234"
       },
     },
+
     phone: {
       type: String,
       required: [true, "Telefonszám megadása kötelező"],
       match: [
         /^(?:\+36|06)(?:20|30|31|70)\d{7}$/,
-        "Érvénytelen magyar telefonszám formátum",
+        "Érvénytelen telefonszám. Példa: +36301234567"
       ],
     },
-    birthDate: { 
-      type: Date, 
+
+    birthDate: {
+      type: Date,
       required: [true, "Születési dátum megadása kötelező"],
       validate: {
         validator: function(value) {
@@ -55,51 +85,54 @@ const userSchema = new mongoose.Schema(
           }
           return age >= 0 && age <= 110;
         },
-        message: "Érvénytelen születési dátum! A kor nem lehet negatív, és nem haladhatja meg a 110 évet."
+        message: "Érvénytelen születési dátum. Példa: 1990-05-14"
       }
-    },      
+    },
+
     role: {
       type: String,
       enum: ["ADMIN", "DOCTOR", "PATIENT"],
       default: "PATIENT",
     },
+
     gender: {
       type: String,
       required: [true, "A nem megadása kötelező"],
       enum: {
         values: ["MALE", "FEMALE"],
-        message: "Kérjük, válasszon nemet (MALE vagy FEMALE)"
+        message: "Érvénytelen nem. Példa: MALE"
       }
     },
 
-    // --- CSAK PÁCIENS MEZŐK ---
+    // --- PATIENT ---
     tajNumber: {
       type: String,
+      set: sanitizeString,
       required: [function () {
         return this.role === "PATIENT";
       }, "TAJ szám megadása kötelező"],
       validate: {
         validator: function (v) {
-          if (!this.isModified("tajNumber")) return true;
           return /^\d{9}$/.test(v);
         },
-        message: "A TAJ számnak pontosan 9 számjegyből kell állnia",
+        message: "Érvénytelen TAJ szám. Példa: 123456789"
       },
     },
+
     address: {
       type: String,
+      set: sanitizeString,
       required: [function () {
         return this.role === "PATIENT";
       }, "Lakcím megadása kötelező"],
       validate: {
         validator: function(v) {
-          if (this.role !== "PATIENT") return true;
-          // Regex: 4 számjegy irányítószám, szóköz, majd a cím
-          return /^\d{4}\s.{3,}$/.test(v);
+          return /^\d{4}\s[\p{L}\s.,\-0-9]+$/u.test(v);
         },
-        message: "Érvénytelen lakcím! Formátum: 1234 Város, Utca házszám"
+        message: "Érvénytelen cím. Példa: 9024 Győr, Szent István út 12"
       }
     },
+
     records: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -107,14 +140,15 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
-    // --- CSAK ORVOS MEZŐK ---
+    // --- DOCTOR ---
     specialization: {
       type: String,
+      set: sanitizeString,
       required: [function () {
         return this.role === "DOCTOR";
-      }, "Specializáció megadása kötelező"],
+      }, "Specializáció megadása kötelező. Példa: Kardiológus"],
     },
-    // Itt hivatkozunk az elérhetőségekre
+
     availabilities: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -124,20 +158,26 @@ const userSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  },
+  }
 );
 
-// Pre-save hook a jelszó titkosításához
-userSchema.pre("save", async function () {
-  if (!this.isModified("password")) return;
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-  } catch (error) {
-    throw new Error("Jelszó titkosítási hiba: " + error.message);
+// GLOBAL SANITIZE
+userSchema.pre("save", function () {
+  for (let key in this._doc) {
+    if (typeof this[key] === "string") {
+      this[key] = sanitizeString(this[key]);
+    }
   }
 });
 
+// PASSWORD HASH
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+});
+
+// PASSWORD CHECK
 userSchema.methods.matchPassword = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
