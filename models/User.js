@@ -67,7 +67,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Telefonszám megadása kötelező"],
       match: [
         /^(?:36|06)(?:20|30|31|70)\d{7}$/,
-        "Érvénytelen telefonszám. Példa: +36301234567"
+        "Érvénytelen telefonszám. Példa: 36301234567"
       ],
     },
 
