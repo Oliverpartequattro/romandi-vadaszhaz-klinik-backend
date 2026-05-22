@@ -1,6 +1,6 @@
 @baseUrl = http://localhost:3000/api
 ###VERCEL
-@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
+###@baseUrl = https://romandi-vadaszhaz-klinik-backend.vercel.app/api
 
 ### 1.1 Összes felhasználó lekérése ADMIN ONLY
 GET {{baseUrl}}/users
@@ -20,7 +20,7 @@ Content-Type: application/json
 
 {
     "name": "Kapocsi Hunor László",
-    "email": "oliverroncz2@gmail.com",
+    "email": "admin@gmail.com",
     "password": "doktorcigany2",
     "phone": "36709998877",
     "address": "9024 Győr, Nádor utca 11",
